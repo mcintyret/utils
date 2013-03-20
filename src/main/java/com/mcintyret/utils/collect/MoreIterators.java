@@ -3,6 +3,7 @@ package com.mcintyret.utils.collect;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.ListIterator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -36,6 +37,21 @@ public final class MoreIterators {
 
     public static <T extends Comparable<T>> Iterator<T> forSequence(Sequence<T> sequence, T max, Collection<T> init) {
         return new BoundedSequenceIterator<>(sequence, max, init);
+    }
+
+    public static <T> ListIterator<T> forArray(T... array) {
+        return new ArrayIterator<>(array);
+    }
+
+    public static <T> ListIterator<T> forArray(int start, T... array) {
+        return new ArrayIterator<>(start, array);
+    }
+
+    public static <T> void clear(Iterator<T> iterator) {
+        while (iterator.hasNext()) {
+            iterator.next();
+            iterator.remove();
+        }
     }
 
     public static <T> Iterator skipFirstN(final Iterator<T> iterator, int n) {

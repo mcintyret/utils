@@ -21,4 +21,8 @@ public final class MoreIterables {
         };
     }
 
+    public static <T> void clear(Iterable<T> iterable) {
+        MoreIterators.clear(iterable.iterator());
+    }
+
 }

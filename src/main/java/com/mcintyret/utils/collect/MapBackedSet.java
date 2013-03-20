@@ -35,7 +35,12 @@ public class MapBackedSet<T> extends AbstractSet<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return map.keySet().iterator();
+        return new AbstractRemovingIterator<T>(map.keySet().iterator()) {
+            @Override
+            protected void doRemove(T removed) {
+                map.remove(removed);
+            }
+        };
     }
 
     @Override
