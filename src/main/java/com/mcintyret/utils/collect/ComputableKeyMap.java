@@ -20,22 +20,30 @@ public abstract class ComputableKeyMap<K, V> extends AbstractMap<K, V> {
         return keyFromValueFunction.apply((V) value);
     }
 
-//    protected static class ComputableKeyEntry<K, V> implements Entry<K, V> {
-//
-//        @Override
-//        public K getKey() {
-//
-//        }
-//
-//        @Override
-//        public V getValue() {
-//            return null;  //To change body of implemented methods use File | Settings | File Templates.
-//        }
-//
-//        @Override
-//        public V setValue(V value) {
-//            return null;  //To change body of implemented methods use File | Settings | File Templates.
-//        }
-//    }
+    protected class ComputableKeyEntry implements Entry<K, V> {
+
+        private V value;
+
+        protected ComputableKeyEntry(V value) {
+            this.value = value;
+        }
+
+        @Override
+        public K getKey() {
+            return keyFromValueFunction.apply(value);
+        }
+
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public V setValue(V value) {
+            V oldVal = this.value;
+            this.value = value;
+            return value;
+        }
+    }
 
 }

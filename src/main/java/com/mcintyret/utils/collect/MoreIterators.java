@@ -1,12 +1,15 @@
 package com.mcintyret.utils.collect;
 
+import com.google.common.collect.Iterators;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * User: mcintyret2
@@ -54,35 +57,43 @@ public final class MoreIterators {
         }
     }
 
-    public static <T> Iterator skipFirstN(final Iterator<T> iterator, int n) {
-        checkArgument(n >= 0);
-        if (n == 0) {
-            return iterator;
-        } else {
-            while (n-- > 0 && iterator.hasNext()) {
-                iterator.next();
-            }
-            return new Iterator<T>() {
-
-                boolean nextCalled = false;
-
-                @Override
-                public boolean hasNext() {
-                    return iterator.hasNext();
-                }
-
-                @Override
-                public T next() {
-                    nextCalled = true;
-                    return iterator.next();
-                }
-
-                @Override
-                public void remove() {
-                    checkState(nextCalled);
-                    iterator.remove();
-                }
-            };
+    public static <T> void fill(ListIterator<T> iterator, T t) {
+        while (iterator.hasNext()) {
+            iterator.next();
+            iterator.set(t);
         }
+    }
+
+    public static <T> void fillWithNull(ListIterator<T> iterator) {
+        fill(iterator, null);
+    }
+
+    public static <T> Iterator skipFirstN(final Iterator<T> iterator, int n) {
+        Iterators.advance(iterator, n);
+        return iterator;
+    }
+
+    public static <T> Iterator skipFirstNOrDie(final Iterator<T> iterator, int n) {
+        int advanced = Iterators.advance(iterator, n);
+        if (advanced != n) {
+            throw new IllegalArgumentException("Fewer than " + n + " elements in iterator.");
+        }
+        return iterator;
+    }
+
+    public static <T> Iterator<T> lockedIterator(Iterator<T> iterator, ReadWriteLock lock) {
+        return new LockedIterator<>(iterator, lock.readLock(), lock.writeLock());
+    }
+
+    public static <T> Iterator<T> lockedIterator(Iterator<T> iterator, Lock lock) {
+        return new LockedIterator<>(iterator, lock, lock);
+    }
+
+    public static <T> ListIterator<T> lockedListIterator(ListIterator<T> iterator, ReadWriteLock lock) {
+        return new LockedListIterator<>(iterator, lock.readLock(), lock.writeLock());
+    }
+
+    public static <T> ListIterator<T> lockedListIterator(ListIterator<T> iterator, Lock lock) {
+        return new LockedListIterator<>(iterator, lock, lock);
     }
 }

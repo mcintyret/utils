@@ -10,33 +10,19 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public abstract class AbstractRemovingIterator<T> implements Iterator<T> {
 
-    private final Iterator<T> delegate;
-
-    public AbstractRemovingIterator(Iterator<T> delegate) {
-        this.delegate = delegate;
-    }
-
     private T last;
 
     @Override
-    public boolean hasNext() {
-        return delegate.hasNext();
-    }
-
-    @Override
-    public T next() {
-        last = delegate.next();
+    public final T next() {
+        last = doNext();
         return last;
     }
 
+    protected abstract T doNext();
+
     @Override
-    public void remove() {
+    public final void remove() {
         checkState(last != null);
-        try {
-            delegate.remove();
-        } catch (UnsupportedOperationException ignored) {
-            // do nothing
-        }
         doRemove(last);
         last = null;
     }
