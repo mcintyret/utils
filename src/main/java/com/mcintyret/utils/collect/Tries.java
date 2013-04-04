@@ -1,24 +1,16 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+import com.google.common.collect.Maps;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * User: mcintyret2
  * Date: 21/03/2013
  */
 public final class Tries {
-
-    private static final Function<Object, String> DEFAULT_FUNCTION = Functions.toStringFunction();
-
-    private static <T> Function<T, String> defaultFunction() {
-        return (Function<T, String>) DEFAULT_FUNCTION;
-    }
 
     private Tries() {
 
@@ -28,145 +20,309 @@ public final class Tries {
         return (Trie<T>) EmptyTrie.INSTANCE;
     }
 
-    public static <T> Trie<T> newHashTrie() {
-        return newHashTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newHashTrie(Function<T, String> keyToValueFunction) {
-        return new HashTrie<>(keyToValueFunction);
-    }
-
-    public static <T> Trie<T> newConcurrentHashTrie() {
-        return newConcurrentHashTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newConcurrentHashTrie(Function<T, String> keyToValueFunction) {
-        return new ConcurrentHashTrie<>(keyToValueFunction);
-    }
-
     public static <T> Trie<T> newAsciiArrayTrie() {
-        return newAsciiArrayTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newAsciiArrayTrie(Function<T, String> keyToValueFunction) {
-        return new ArrayTrie<T>(keyToValueFunction) {
-            @Override
-            public boolean isCharacterInteresting(char c) {
-                return c < 128;
-            }
-
-            @Override
-            protected int charToIndex(char c) {
-                return c;
-            }
-
-            @Override
-            protected int charsetSize() {
-                return 128;
-            }
-        };
+        return new StrategyFollowingArrayTrie<>(ArrayTrieStrategy.ASCII);
     }
 
     public static <T> Trie<T> newSingleCaseArrayTrie() {
-        return newSingleCaseArrayTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newSingleCaseArrayTrie(Function<T, String> keyToValueFunction) {
-        return new ArrayTrie<T>(keyToValueFunction) {
-            @Override
-            protected boolean isCharacterInteresting(char c) {
-                return isAsciiLetter(c);
-            }
-
-            @Override
-            protected int charToIndex(char c) {
-                return c >= 'a' ? c - 'a' : c - 'A';
-            }
-
-            @Override
-            protected int charsetSize() {
-                return 26;
-            }
-        };
+        return new StrategyFollowingArrayTrie<>(ArrayTrieStrategy.SINGLE_CASE);
     }
 
     public static <T> Trie<T> newSingleCaseNumericArrayTrie() {
-        return newSingleCaseNumericArrayTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newSingleCaseNumericArrayTrie(Function<T, String> keyToValueFunction) {
-        return new ArrayTrie<T>(keyToValueFunction) {
-            @Override
-            protected boolean isCharacterInteresting(char c) {
-                return isAsciiLetterOrNumber(c);
-            }
-
-            @Override
-            protected int charToIndex(char c) {
-                return c >= 'a' ? c - 'a' : (c >= 'A' ? c - 'A' : 26 + c - '0');
-            }
-
-            @Override
-            protected int charsetSize() {
-                return 36;
-            }
-        };
+        return new StrategyFollowingArrayTrie<>(ArrayTrieStrategy.SINGLE_CASE_NUMERIC);
     }
 
     public static <T> Trie<T> newMixedCaseArrayTrie() {
-        return newMixedCaseArrayTrie(Tries.<T>defaultFunction());
-    }
-
-    public static <T> Trie<T> newMixedCaseArrayTrie(Function<T, String> keyToValueFunction) {
-        return new ArrayTrie<T>(keyToValueFunction) {
-            @Override
-            protected boolean isCharacterInteresting(char c) {
-                return isAsciiLetter(c);
-            }
-
-            @Override
-            protected int charToIndex(char c) {
-                return c >= 'a' ? c - 'a' : 26 + c - 'A';
-            }
-
-            @Override
-            protected int charsetSize() {
-                return 52;
-            }
-        };
+        return new StrategyFollowingArrayTrie<>(ArrayTrieStrategy.MIXED_CASE);
     }
 
     public static <T> Trie<T> newMixedCaseNumericArrayTrie() {
-        return newMixedCaseNumericArrayTrie(Tries.<T>defaultFunction());
+        return new StrategyFollowingArrayTrie<>(ArrayTrieStrategy.MIXED_CASE_NUMERIC);
     }
 
-    public static <T> Trie<T> newMixedCaseNumericArrayTrie(Function<T, String> keyToValueFunction) {
-        return new ArrayTrie<T>(keyToValueFunction) {
-            @Override
-            protected boolean isCharacterInteresting(char c) {
-                return isAsciiLetterOrNumber(c);
-            }
+    public static <T> Trie<T> newConcurrentAsciiArrayTrie() {
+        return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.ASCII));
+    }
 
-            @Override
-            protected int charToIndex(char c) {
-                return c >= 'a' ? c - 'a' : (c >= 'A' ? 26 + c - 'A' : 52 + c - '0');
-            }
+    public static <T> Trie<T> newConcurrentSingleCaseArrayTrie() {
+        return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.SINGLE_CASE));
+    }
 
-            @Override
-            protected int charsetSize() {
-                return 62;
-            }
+    public static <T> Trie<T> newConcurrentSingleCaseNumericArrayTrie() {
+        return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.SINGLE_CASE_NUMERIC));
+    }
 
+    public static <T> Trie<T> newConcurrentMixedCaseArrayTrie() {
+        return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.MIXED_CASE));
+    }
+
+    public static <T> Trie<T> newConcurrentMixedCaseNumericArrayTrie() {
+        return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.MIXED_CASE_NUMERIC));
+    }
+
+    public static <T> Trie<T> newHashTrie() {
+        return new AbstractTrie<T>() {
+            @Override
+            protected TrieNode<T> newTrieNode(T value) {
+                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newHashMap(), value);
+            }
         };
     }
 
-    private static boolean isAsciiLetter(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    public static <T> Trie<T> newConcurrentHashTrie() {
+        return new ConcurrentTrie<T>(new AbstractTrie<T>() {
+            @Override
+            protected TrieNode<T> newTrieNode(T value) {
+                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newConcurrentMap(), value);
+            }
+        });
     }
 
-    private static boolean isAsciiLetterOrNumber(char c) {
-        return isAsciiLetter(c) || (c >= '0' && c <= '9');
+    private static class ConcurrentTrie<T> extends AbstractTrie<T> {
+
+        protected final AbstractTrie<T> delegate;
+
+        protected final ReadWriteLock rootLock;
+        protected final ReadWriteLock sizeLock;
+
+        private ConcurrentTrie(AbstractTrie<T> delegate, ReadWriteLock rootLock, ReadWriteLock sizeLock) {
+            this.delegate = delegate;
+            this.rootLock = rootLock;
+            this.sizeLock = sizeLock;
+        }
+
+        private ConcurrentTrie(AbstractTrie<T> delegate) {
+            this(delegate, new ReentrantReadWriteLock(), new ReentrantReadWriteLock());
+        }
+
+        @Override
+        protected TrieNode<T> newTrieNode(T value) {
+            return delegate.newTrieNode(value);
+        }
+
+        @Override
+        protected void modifySize(int delta) {
+            sizeLock.writeLock().lock();
+            try {
+                delegate.modifySize(delta);
+            } finally {
+                sizeLock.writeLock().unlock();
+            }
+        }
+
+        @Override
+        public int size() {
+            sizeLock.readLock().lock();
+            try {
+                return delegate.size();
+            } finally {
+                sizeLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        protected void setRootIfNull() {
+            rootLock.readLock().lock();
+            try {
+                if (delegate.getRoot() == null) {
+                    rootLock.readLock().unlock();
+                    rootLock.writeLock().lock();
+                    try {
+                        if (delegate.getRoot() == null) {
+                            delegate.setRootIfNull();
+                        }
+                    } finally {
+                        rootLock.readLock().lock();
+                        rootLock.writeLock().unlock();
+                    }
+                }
+            } finally {
+                rootLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        protected TrieNode<T> getRoot() {
+            rootLock.readLock().lock();
+            try {
+                return delegate.getRoot();
+            } finally {
+                rootLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public Trie<T> getSubTrie(String key) {
+            return new ConcurrentTrie<>((AbstractTrie<T>) delegate.getSubTrie(key), rootLock, sizeLock);
+        }
+
+        @Override
+        public Trie<T> removeSubTrie(String key) {
+            return new ConcurrentTrie<>((AbstractTrie<T>) delegate.getSubTrie(key), rootLock, sizeLock);
+        }
     }
+
+    private static class VeryConcurrentTrie<T> extends ConcurrentTrie<T> {
+
+        private VeryConcurrentTrie(AbstractTrie<T> delegate, ReadWriteLock rootLock, ReadWriteLock sizeLock) {
+            super(delegate, rootLock, sizeLock);
+        }
+
+        private VeryConcurrentTrie(AbstractTrie<T> delegate) {
+            super(delegate);
+        }
+
+        @Override
+        protected TrieNode<T> newTrieNode(T value) {
+            return concurrentTrieNode(delegate.newTrieNode(value));
+        }
+
+        @Override
+        public Trie<T> getSubTrie(String key) {
+            return new VeryConcurrentTrie<>((AbstractTrie<T>) delegate.getSubTrie(key), rootLock, sizeLock);
+        }
+
+        @Override
+        public Trie<T> removeSubTrie(String key) {
+            return new VeryConcurrentTrie<>((AbstractTrie<T>) delegate.getSubTrie(key), rootLock, sizeLock);
+        }
+
+    }
+
+    private static <V> TrieNode<V> concurrentTrieNode(final TrieNode<V> node) {
+        return new TrieNode<V>() {
+
+            private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+            @Override
+            public V getValue() {
+                lock.readLock().lock();
+                try {
+                    return node.getValue();
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public V setValue(V value) {
+                lock.writeLock().lock();
+                try {
+                    return node.setValue(value);
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+
+            @Override
+            public TrieNode<V> getChild(char c) {
+                lock.readLock().lock();
+                try {
+                    return node.getChild(c);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public void setChild(char c, TrieNode<V> child) {
+                lock.writeLock().lock();
+                try {
+                    node.setChild(c, child);
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+
+            @Override
+            public boolean isEmpty() {
+                lock.readLock().lock();
+                try {
+                    return node.isEmpty();
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public void clear() {
+                lock.writeLock().lock();
+                try {
+                    node.clear();
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+
+            @Override
+            public Iterator<CharacterAndNode<V>> iterator() {
+                lock.readLock().lock();
+                try {
+                    return MoreIterators.lockedIterator(node.iterator(), lock);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+        };
+    }
+
+    private static class StrategyFollowingArrayTrie<V> extends AbstractTrie<V> {
+        private final ArrayTrieStrategy strategy;
+
+        public StrategyFollowingArrayTrie(ArrayTrieStrategy strategy) {
+            this.strategy = strategy;
+        }
+
+        @Override
+        protected TrieNode<V> newTrieNode(V value) {
+            return new AbstractArrayTrieNode<V>(value) {
+                @Override
+                protected int charToIndex(char c) {
+                    return strategy.charToIndex(c);
+                }
+
+                @Override
+                protected char indexToChar(int i) {
+                    return strategy.indexToChar(i);
+                }
+
+                @Override
+                protected int charsetSize() {
+                    return strategy.charsetSize();
+                }
+            };
+        }
+
+        @Override
+        public boolean isCharacterInteresting(char c) {
+            return strategy.isCharacterInteresting(c);
+        }
+    }
+
+    private static class StrategyFollowingArrayTrieNode<V> extends AbstractArrayTrieNode<V> {
+        private final ArrayTrieStrategy strategy;
+
+        public StrategyFollowingArrayTrieNode(ArrayTrieStrategy strategy, V val) {
+            super(val);
+            this.strategy = strategy;
+        }
+
+        @Override
+        protected int charToIndex(char c) {
+            return strategy.charToIndex(c);
+        }
+
+        @Override
+        protected char indexToChar(int i) {
+            return strategy.indexToChar(i);
+        }
+
+        @Override
+        protected int charsetSize() {
+            return strategy.charsetSize();
+        }
+    }
+
 
     public static <T> Trie<T> unmodifiableTrie(final Trie<T> trie) {
         return new ForwardingTrie<T>() {
@@ -176,13 +332,13 @@ public final class Tries {
             }
 
             @Override
-            public void add(T val) {
-                throw new UnsupportedOperationException();
+            public Trie<T> getSubTrie(String key) {
+                return unmodifiableTrie(trie.getSubTrie(key));
             }
 
             @Override
-            public Trie<T> subTrie(String key) {
-                return unmodifiableTrie(trie.subTrie(key));
+            public Trie<T> removeSubTrie(String key) {
+                throw new UnsupportedOperationException();
             }
 
             @Override
@@ -211,12 +367,12 @@ public final class Tries {
         private static final Trie<Object> INSTANCE = new EmptyTrie();
 
         @Override
-        public void add(Object val) {
-            throw new UnsupportedOperationException();
+        public Trie<Object> getSubTrie(String key) {
+            return this;
         }
 
         @Override
-        public Trie<Object> subTrie(String key) {
+        public Trie<Object> removeSubTrie(String key) {
             return this;
         }
 

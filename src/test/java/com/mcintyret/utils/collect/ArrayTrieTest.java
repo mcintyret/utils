@@ -1,6 +1,5 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mcintyret.utils.RandomUtils;
@@ -8,7 +7,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -22,18 +20,18 @@ import static org.testng.AssertJUnit.*;
 @Test
 public class ArrayTrieTest {
 
-    private final ValueClass foo = new ValueClass("foo");
-    private final ValueClass foobar = new ValueClass("foobar");
-    private final ValueClass bar = new ValueClass("bar");
-    private final ValueClass baz = new ValueClass("baz");
+    private final Object foo = new Object();
+    private final Object foobar = new Object();
+    private final Object bar = new Object();
+    private final Object baz = new Object();
 
     public void shouldAdd() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
-        trie.add(bar);
-        trie.add(baz);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
 
         assertEquals(4, trie.size());
 
@@ -47,12 +45,12 @@ public class ArrayTrieTest {
     }
 
     public void shouldOverwrite() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
+        trie.put("foo", foo);
 
-        ValueClass newFoo = new ValueClass("foo");
-        trie.add(newFoo);
+        Object newFoo = new Object();
+        trie.put("foo", newFoo);
 
         assertEquals(1, trie.size());
 
@@ -61,12 +59,12 @@ public class ArrayTrieTest {
     }
 
     public void shouldGet() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
-        trie.add(bar);
-        trie.add(baz);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
 
         assertSame(foo, trie.get("foo"));
         assertSame(bar, trie.get("bar"));
@@ -78,14 +76,14 @@ public class ArrayTrieTest {
     }
 
     public void shouldIterateValues() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
-        trie.add(bar);
-        trie.add(baz);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
 
-        Set<ValueClass> set = Sets.newHashSet(trie.values()); // uses iterator
+        Set<Object> set = Sets.newHashSet(trie.values()); // uses iterator
 
         assertEquals(4, set.size());
         assertTrue(set.contains(foo));
@@ -95,14 +93,14 @@ public class ArrayTrieTest {
     }
 
     public void shouldGetAll() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
-        trie.add(bar);
-        trie.add(baz);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
 
-        Set<ValueClass> foos = Sets.newHashSet(trie.subTrie("foo").values());
+        Set<Object> foos = Sets.newHashSet(trie.getSubTrie("foo").values());
         assertEquals(2, foos.size());
         assertTrue(foos.contains(foo));
         assertTrue(foos.contains(foobar));
@@ -110,10 +108,10 @@ public class ArrayTrieTest {
 
     public void shouldRemove() {
 
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
 
         assertEquals(2, trie.size());
         assertTrue(trie.containsKey("foo"));
@@ -137,59 +135,47 @@ public class ArrayTrieTest {
     public void shouldIterateInLexicographicOrder() {
         Trie<String> trie = Tries.newSingleCaseArrayTrie();
         for (int i = 0; i < 5000; i++) {
-            trie.add(RandomStringUtils.randomAlphabetic(RandomUtils.nextIntBetween(2, 7)).toUpperCase());
+            String str = RandomStringUtils.randomAlphabetic(RandomUtils.nextIntBetween(2, 7));
+            trie.put(str, str);
         }
         List<String> trieList = Lists.newArrayList(trie.values());
+        System.out.println(trieList);
         List<String> sortedCopy = Lists.newArrayList(trieList);
-//        Collections.sort(sortedCopy, TRIE_ORDER_COMPARATOR);
-        Collections.sort(sortedCopy);
+        Collections.sort(sortedCopy, String.CASE_INSENSITIVE_ORDER);
 
         assertEquals(sortedCopy, trieList);
         assertEquals(trieList.size(), trie.size());
     }
 
     public void shouldMakeSubtrie() {
-        Trie<ValueClass> trie = Tries.newSingleCaseArrayTrie(KEY_FROM_VALUE_FUNCTION);
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
-        trie.add(foo);
-        trie.add(foobar);
-        trie.add(bar);
-        trie.add(baz);
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
 
-        Trie<ValueClass> subtrie = trie.subTrie("foo");
+        Trie<Object> subtrie = trie.getSubTrie("foo");
         assertEquals(2, subtrie.size());
         assertTrue(subtrie.containsKey("foo"));
         assertTrue(subtrie.containsKey("foobar"));
         assertFalse(subtrie.containsKey("bar"));
 
-        subtrie.add(new ValueClass("fooble"));
+        subtrie.put("fooble", new Object());
         assertEquals(3, subtrie.size());
         assertEquals(5, trie.size());
 
         assertTrue(trie.containsKey("fooble"));
 
+        subtrie.clear();
+        assertTrue(subtrie.isEmpty());
+        assertEquals(2, trie.size());
+        assertTrue(trie.containsKey("bar"));
+        assertTrue(trie.containsKey("baz"));
+        assertFalse(trie.containsKey("foo"));
+        assertFalse(trie.containsKey("foobar"));
+        assertFalse(trie.containsKey("fooble"));
+
     }
 
-    private static final Function<ValueClass, String> KEY_FROM_VALUE_FUNCTION = new Function<ValueClass, String>() {
-        @Override
-        public String apply(ValueClass input) {
-            return input.key;
-        }
-    };
-
-    private static final Comparator<String> TRIE_ORDER_COMPARATOR = new Comparator<String>() {
-        @Override
-        public int compare(String o1, String o2) {
-            int len = o1.length() - o2.length();
-            return len == 0 ? o1.compareTo(o2) : len;
-        }
-    };
-
-    private static class ValueClass {
-        final String key;
-
-        public ValueClass(String key) {
-            this.key = key;
-        }
-    }
 }

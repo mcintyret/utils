@@ -8,8 +8,8 @@ import java.util.Map;
  */
 public interface Trie< V> extends Map<String, V> {
 
-    void add(V val);
+    Trie<V> getSubTrie(String key);
 
-    Trie<V> subTrie(String key);
+    Trie<V> removeSubTrie(String key);
 
 }

@@ -46,4 +46,12 @@ public class Utils {
         return Iterators.transform(iterator, Utils.<K, V>valueFunction());
     }
 
+    public static int[] upTo(int upTo) {
+        int[] a = new int[upTo];
+        for (int i = 0; i < upTo; i++) {
+            a[i] = i;
+        }
+        return a;
+    }
+
 }

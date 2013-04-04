@@ -1,77 +1,63 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
+import java.io.Serializable;
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.singletonIterator;
-import static com.mcintyret.utils.Utils.valueIterator;
 
 /**
  * User: mcintyret2
  * Date: 19/03/2013
+ *
+ * // TODO: make null-safe?
  */
-public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements Trie<V> {
+public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements Trie<V>, Serializable {
 
-    protected final TrieNode root;
-    private final Function<V, String> keyFromValueFunction;
-
-    private final Sizer sizer;
-
-    protected void modifySize(int delta) {
-        sizer.modifySize(delta);
-    }
-
-    protected void resetSize() {
-        sizer.resetSize();
-    }
-
-    @Override
-    public int size() {
-        return sizer.getSize();
-    }
-
-    // For creating subtries
-    private AbstractTrie(TrieNode root, Function<V, String> keyFromValueFunction) {
-        this.root = root;
-        this.keyFromValueFunction = keyFromValueFunction;
-        this.sizer = null;
-    }
-
-    protected AbstractTrie(Function<V, String> keyFromValueFunction, Sizer sizer) {
-        this.keyFromValueFunction = keyFromValueFunction;
-        this.sizer = sizer;
-        this.root = newTrieNode();
-    }
-
-    protected AbstractTrie(Function<V, String> keyFromValueFunction) {
-        this(keyFromValueFunction, new SimpleSizer());
-    }
-
-    protected abstract TrieNode newTrieNode(V value);
-
-    private TrieNode newTrieNode() {
-        return newTrieNode(null);
-    }
+    protected abstract TrieNode<V> newTrieNode(V value);
 
     protected boolean isCharacterInteresting(char c) {
         // simple default returning true for all characters.
         return true;
     }
 
+    private int size = 0;
+
+    private TrieNode<V> root;
+
+    protected void modifySize(int delta) {
+        size += delta;
+    }
+
+    protected void setRootIfNull() {
+        if (root == null) {
+            root = newTrieNode(null);
+        }
+    }
+
+    protected TrieNode<V> getRoot() {
+        return root;
+    }
+
     @Override
-    public void add(V val) {
-        checkNotNull(val);
-        put(keyFromValueFunction.apply(val), val);
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public void clear() {
+        root = null;
+        size = 0;
     }
 
     @Override
     public V put(String key, V val) {
         checkNotNull(key);
         checkNotNull(val);
-        TrieNode node = getNode(key, true);
+        TrieNode<V> node = getNode(stripUninterestingChars(key), true);
         V prev = node.setValue(val);
         if (prev == null) {
             modifySize(+1);
@@ -85,21 +71,23 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
     }
 
     private V get(String key) {
-        TrieNode node = getNode(key);
+        TrieNode<V> node = getNode(stripUninterestingChars(key));
         return node == null ? null : node.getValue();
     }
 
 
-    private final TrieNode getNode(TrieNode node, String key, int from, int to, boolean create) {
-        checkNotNull(key);
+    private TrieNode<V> getNode(TrieNode<V> node, String key, int from, int to, boolean create) {
+        if (node == null) {
+            return null;
+        }
 
-        for (int i = from; i < to; i++) {
+        for (int i = from; i <= to; i++) {
             char c = key.charAt(i);
             if (isCharacterInteresting(c)) {
-                TrieNode next = node.getChild(c);
+                TrieNode<V> next = node.getChild(c);
                 if (next == null) {
                     if (create) {
-                        next = newTrieNode();
+                        next = newTrieNode(null);
                         node.setChild(c, next);
                     } else {
                         return null;
@@ -111,32 +99,25 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         return node;
     }
 
-    protected TrieNode getNode(String key, int to, boolean create) {
-        return getNode(root, key, 0, to, create);
+    protected TrieNode<V> getNode(String key, int to, boolean create) {
+        if (create) {
+            setRootIfNull();
+        }
+        return getNode(getRoot(), key, 0, to, create);
     }
 
-    protected TrieNode getNode(String key, boolean create) {
-        return getNode(key, key.length(), create);
+    protected TrieNode<V> getNode(String key, boolean create) {
+        return getNode(key, key.length() - 1, create);
     }
 
-    private final TrieNode getNode(String key) {
+    private TrieNode<V> getNode(String key) {
         return getNode(key, false);
     }
 
 
     @Override
     public boolean containsKey(Object key) {
-        TrieNode node = getNode((String) key);
-        return node != null && node.getKey() != null;
-    }
-
-    @Override
-    public void clear() {
-        if (!isEmpty()) {
-            root.clear();
-            root.setValue(null);
-            resetSize();
-        }
+        return get(key) != null;
     }
 
     @Override
@@ -146,7 +127,7 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
     }
 
     private V remove(String key) {
-        V removed = doRemove(key);
+        V removed = doRemove(stripUninterestingChars(key));
         if (removed != null) {
             modifySize(-1);
         }
@@ -158,21 +139,20 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
     }
 
     private V doRemove(String key, int end) {
-        while(!isCharacterInteresting(key.charAt(end))) {
-            end--;
-        }
-        TrieNode parent = getNode(key, end, false);
+        TrieNode<V> parent = getNode(key, end - 1, false);
         if (parent != null) {
             char lastChar = key.charAt(end);
-            TrieNode child = parent.getChild(lastChar);
-            if (child.isEmpty()) {
-                parent.setChild(lastChar, null);
-                if (parent != root && parent.getValue() == null) {
-                    doRemove(key, end - 1);
+            TrieNode<V> child = parent.getChild(lastChar);
+            if (child != null) {
+                if (child.isEmpty()) {
+                    parent.setChild(lastChar, null);
+                    if (parent != getRoot() && parent.getValue() == null) {
+                        doRemove(key, end - 1);
+                    }
+                    return child.getValue();
+                } else {
+                    return child.setValue(null);
                 }
-                return child.getValue();
-            } else {
-                return child.setValue(null);
             }
         }
         return null;
@@ -187,7 +167,7 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
 
                 @Override
                 public Iterator<Entry<String, V>> iterator() {
-                    return new TrieIterator(root);
+                    return new LexicographicTrieIterator(getRoot());
                 }
 
                 @Override
@@ -199,132 +179,104 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         return entrySet;
     }
 
-    private Collection values;
-
     @Override
-    public Collection<V> values() {
-        if (values == null) {
-            values = new AbstractCollection<V>() {
-
-                @Override
-                public boolean contains(Object o) {
-                    return AbstractTrie.this.containsValue(o);
-                }
-
-                @Override
-                public boolean add(V value) {
-                    AbstractTrie.this.add(value);
-                    return true;
-                }
-
-                @Override
-                public boolean remove(Object o) {
-                    if (o != null) {
-                        String key = toKey(o);
-                        TrieNode node = getNode(key);
-                        if (node != null && o.equals(node.getValue())) {
-                            // we do need to remove
-                            doRemove(key);
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-
-                @Override
-                public Iterator<V> iterator() {
-                    return valueIterator(new LexicographicTrieIterator(root));
-                }
-
-                @Override
-                public int size() {
-                    return AbstractTrie.this.size();
-                }
-            };
-        }
-        return values;
+    public Trie<V> getSubTrie(String key) {
+        TrieNode<V> node = getNode(key);
+        return node == null ? Tries.<V>emptyTrie() : new Subtrie(key, node);
     }
 
     @Override
-    public boolean containsValue(Object val) {
-        if (val != null) {
-            TrieNode node = getNode(toKey(val));
-            return node != null && val.equals(node.getValue());
-        }
-        return false;
+    public Trie<V> removeSubTrie(String key) {
+        TrieNode<V> node = removeTrieNode(key);
+        return node == null ? Tries.<V>emptyTrie() : new Subtrie(key, node);
     }
 
-
-    // TODO: return empty Trie rather than null
-    @Override
-    public Trie<V> subTrie(String key) {
-        TrieNode node = getNode(key);
-        return node == null ? Tries.<V>emptyTrie() : new Subtrie<>(key, node, this, keyFromValueFunction);
-    }
-
-
-    private class TrieIterator extends AbstractHasNextFetchingIterator<Entry<String, V>> {
-
-        TrieIterator(TrieNode node) {
-            iterator = singletonIterator(node);
+    private TrieNode<V> removeTrieNode(String key) {
+        if (key.isEmpty()) {
+            return getRoot();
         }
-
-        private final Queue<Iterator<TrieNode>> iteratorQueue = new ArrayDeque<>();
-        private Iterator<TrieNode> iterator;
-
-        @Override
-        public boolean doHasNext() {
-            while (iterator.hasNext()) {
-                TrieNode node = iterator.next();
-                iteratorQueue.offer(node.iterator());
-                if (node.getValue() != null) {
-                    // This is an actual entry of interest
-                    setNext(node);
-                    return true;
-                }
+        TrieNode<V> parent = key.length() == 1 ? getRoot() : getNode(key, key.length() - 2, false);
+        if (parent != null) {
+            char c = key.charAt(key.length() - 1);
+            TrieNode<V> node = parent.getChild(c);
+            if (node != null) {
+                parent.setChild(c, null);
             }
-            if (!iteratorQueue.isEmpty()) {
-                iterator = iteratorQueue.poll();
-                return doHasNext();
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        protected void doRemove(Entry<String, V> removed) {
-            AbstractTrie.this.remove(removed.getKey());
+            modifySize(-Iterators.size(new LexicographicTrieIterator(node, key)));
+            return node;
+        } else {
+            return null;
         }
     }
 
     private class LexicographicTrieIterator extends AbstractHasNextFetchingIterator<Entry<String, V>> {
 
-        LexicographicTrieIterator(TrieNode node) {
-            iterator = singletonIterator(node);
+        private final Stack<Iterator<CharacterAndNode<V>>> iteratorStack = new Stack<>();
+        private Iterator<CharacterAndNode<V>> iterator;
+
+        LexicographicTrieIterator(TrieNode<V> root) {
+            this(root, "");
         }
 
-        private final Stack<Iterator<TrieNode>> iteratorStack = new Stack<>();
-        private Iterator<TrieNode> iterator;
+        LexicographicTrieIterator(TrieNode<V> node, String prefix) {
+            key = Arrays.copyOf(prefix.toCharArray(), 10);
+            index = prefix.length();
+            iterator = node == null ? Iterators.<CharacterAndNode<V>>emptyIterator() :
+                    singletonIterator(new CharacterAndNode<>('\0', node));
+        }
+
+        private char[] key;
+        private int index;
 
         @Override
         public boolean doHasNext() {
             while (iterator.hasNext()) {
-                TrieNode node = iterator.next();
+                final CharacterAndNode<V> charAndNode = iterator.next();
+                updateKey(charAndNode.getChar());
                 iteratorStack.push(iterator);
-                iterator = node.iterator();
-                if (node.getValue() != null) {
+                iterator = charAndNode.getNode().iterator();
+                if (charAndNode.getNode().getValue() != null) {
                     // This is an actual entry of interest
-                    setNext(node);
+                    setNext(new Entry<String, V>() {
+
+                        final String thisKey = new String(key, 0, index);
+
+                        @Override
+                        public String getKey() {
+                            return thisKey;
+                        }
+
+                        @Override
+                        public V getValue() {
+                            return charAndNode.getNode().getValue();
+                        }
+
+                        @Override
+                        public V setValue(V value) {
+                            return charAndNode.getNode().setValue(value);
+                        }
+                    });
                     return true;
                 }
             }
             if (!iteratorStack.isEmpty()) {
                 iterator = iteratorStack.pop();
+                index--;
                 return doHasNext();
             } else {
                 return false;
             }
         }
+
+        private void updateKey(char c) {
+            if (c != '\0') {
+                if (index == key.length) {
+                    key = Arrays.copyOf(key, key.length * 2);
+                }
+                key[index++] = c;
+            }
+        }
+
 
         @Override
         protected void doRemove(Entry<String, V> removed) {
@@ -332,94 +284,110 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         }
     }
 
-    protected abstract class TrieNode implements Entry<String, V>, Iterable<TrieNode> {
-
-        private V val;
-
-        protected TrieNode(V val) {
-            this.val = val;
-        }
-
-        @Override
-        public String getKey() {
-            return val == null ? null : keyFromValueFunction.apply(val);
-        }
-
-        @Override
-        public V getValue() {
-            return val;
-        }
-
-        @Override
-        public V setValue(V value) {
-            V oldVal = val;
-            this.val = value;
-            return oldVal;
-        }
-
-        protected abstract TrieNode getChild(char c);
-
-        protected abstract void setChild(char c, TrieNode child);
-
-        protected abstract boolean isEmpty();
-
-        protected abstract void clear();
-
-    }
-
-    private String toKey(Object o) {
-        return keyFromValueFunction.apply((V) o);
-    }
-
-    private static class Subtrie<V> extends AbstractTrie<V> {
+    private class Subtrie extends AbstractMap<String, V> implements Trie<V> {
 
         private final String prefix;
 
-        private final AbstractTrie<V> backingTrie;
+        private TrieNode<V> root;
 
-        public Subtrie(String prefix, TrieNode root, AbstractTrie<V> trie, Function<V, String> keyFromValueFunction) {
-            super(root, keyFromValueFunction);
+        public Subtrie(String prefix, TrieNode<V> root) {
             this.prefix = prefix;
-            this.backingTrie = trie;
+            this.root = root;
         }
 
         @Override
-        protected void modifySize(int delta) {
-            backingTrie.modifySize(delta);
+        public boolean containsKey(Object key) {
+            return get(key) != null;
         }
 
         @Override
-        protected void resetSize() {
-            backingTrie.resetSize();
-        }
-
-        @Override
-        protected TrieNode newTrieNode(V value) {
-            return backingTrie.newTrieNode(value);
-        }
-
-        @Override
-        protected boolean isCharacterInteresting(char c) {
-            return backingTrie.isCharacterInteresting(c);
-        }
-
-        @Override
-        protected TrieNode getNode(String key, int to, boolean create) {
-            if (!key.startsWith(prefix)) {
-                if (create) {
-                    throw new IllegalArgumentException();
-                } else {
-                    return null;
-                }
+        public V put(String key, V val) {
+            checkNotNull(key);
+            checkNotNull(val);
+            checkArgument(checkKey(key));
+            TrieNode<V> node = getSubtrieNode(key, true);
+            V prev = node.setValue(val);
+            if (prev == null) {
+                AbstractTrie.this.modifySize(+1);
             }
-            return backingTrie.getNode(this.root, key, prefix.length(), to, create);
+            return prev;
+        }
+
+        @Override
+        public V get(Object key) {
+            TrieNode<V> node = getSubtrieNode((String) key, false);
+            return node == null ? null : node.getValue();
+        }
+
+        @Override
+        public V remove(Object key) {
+            return remove((String) key);
+        }
+
+        private V remove(String key) {
+            checkArgument(checkKey(key));
+            return AbstractTrie.this.remove(key);
+        }
+
+        private TrieNode<V> getSubtrieNode(String key, boolean create) {
+            if (!checkKey(key)) {
+                return null;
+            }
+            if (root == null && create) {
+                root = newTrieNode(null);
+            }
+            return AbstractTrie.this.getNode(root, key, prefix.length(), key.length() - 1, create);
         }
 
         @Override
         public int size() {
-            return Iterators.size(entrySet().iterator());
+            return entrySet().size();
         }
 
+        @Override
+        public Set<Entry<String, V>> entrySet() {
+            return new AbstractSet<Entry<String, V>>() {
+                @Override
+                public Iterator<Entry<String, V>> iterator() {
+                    return new LexicographicTrieIterator(root, prefix);
+                }
+
+                @Override
+                public int size() {
+                    return Iterators.size(iterator());
+                }
+            };
+        }
+
+        @Override
+        public Trie<V> getSubTrie(String key) {
+            return checkKey(key) ? AbstractTrie.this.getSubTrie(key) : Tries.<V>emptyTrie();
+        }
+
+        @Override
+        public Trie<V> removeSubTrie(String key) {
+            return checkKey(key) ? AbstractTrie.this.removeSubTrie(key) : Tries.<V>emptyTrie();
+        }
+
+        @Override
+        public void clear() {
+            AbstractTrie.this.removeSubTrie(prefix);
+            root = null;
+        }
+
+        private boolean checkKey(String key) {
+            return key.startsWith(prefix);
+        }
     }
 
+    private String stripUninterestingChars(String key) {
+        char[] chars = new char[key.length()];
+        int index = 0;
+        for (char c : key.toCharArray()) {
+            if (isCharacterInteresting(c)) {
+                chars[index++] = c;
+            }
+        }
+        return new String(chars, 0, index);
+    }
 }

@@ -9,13 +9,8 @@ import com.google.common.collect.ForwardingMap;
 public abstract class ForwardingTrie<T> extends ForwardingMap<String, T> implements Trie<T> {
 
     @Override
-    public void add(T val) {
-        delegate().add(val);
-    }
-
-    @Override
-    public Trie<T> subTrie(String key) {
-        return delegate().subTrie(key);
+    public Trie<T> getSubTrie(String key) {
+        return delegate().getSubTrie(key);
     }
 
     @Override
