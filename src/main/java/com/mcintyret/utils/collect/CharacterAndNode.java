@@ -21,4 +21,9 @@ final class CharacterAndNode<V> {
     public TrieNode<V> getNode() {
         return node;
     }
+
+    @Override
+    public String toString() {
+        return c + "->" + String.valueOf(node.getValue());
+    }
 }

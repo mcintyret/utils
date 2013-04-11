@@ -1,5 +1,7 @@
 package com.mcintyret.utils.collect;
 
+import com.google.common.collect.PeekingIterator;
+
 import javax.annotation.Nullable;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -10,7 +12,7 @@ import static com.google.common.base.Preconditions.*;
  * User: mcintyret2
  * Date: 20/03/2013
  */
-public class ArrayIterator<E> implements ListIterator<E> {
+public class ArrayIterator<E> implements ListIterator<E>, PeekingIterator<E> {
 
     private final E[] array;
 
@@ -33,14 +35,23 @@ public class ArrayIterator<E> implements ListIterator<E> {
         return isInRange(index);
     }
 
-    @Override
-    public E next() {
-        if (hasNext()) {
-            lastIndex = index++;
-            return array[lastIndex];
-        } else {
+    private void checkHasNext() {
+        if (!hasNext()) {
             throw new NoSuchElementException();
         }
+    }
+
+    @Override
+    public E peek() {
+        checkHasNext();
+        return array[index];
+    }
+
+    @Override
+    public E next() {
+        checkHasNext();
+        lastIndex = index++;
+        return array[lastIndex];
     }
 
     @Override

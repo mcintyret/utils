@@ -1,12 +1,13 @@
 package com.mcintyret.utils.collect;
 
+import com.google.common.collect.PeekingIterator;
+
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
-* User: mcintyret2
-* Date: 04/04/2013
-*/
+ * User: mcintyret2
+ * Date: 04/04/2013
+ */
 abstract class AbstractArrayTrieNode<V> extends AbstractTrieNode<V> {
 
     private final TrieNode<V>[] children;
@@ -37,27 +38,31 @@ abstract class AbstractArrayTrieNode<V> extends AbstractTrieNode<V> {
     }
 
     @Override
-    public Iterator<CharacterAndNode<V>> iterator() {
-        return new AbstractHasNextFetchingIterator<CharacterAndNode<V>>() {
-            int index = 0;
+    public PeekingIterator<CharacterAndNode<V>> iterator() {
+        return iterator(0);
+    }
 
-            @Override
-            protected boolean doHasNext() {
-                for (; index < children.length; index++) {
-                    if (children[index] != null) {
-                        setNext(new CharacterAndNode<>(indexToChar(index), children[index]));
-                        index++;
-                        return true;
-                    }
-                }
-                return false;
-            }
+    @Override
+    public PeekingIterator<CharacterAndNode<V>> iterator(char c) {
+        return iterator(charToIndex(c));
+    }
 
-            @Override
-            protected void doRemove(CharacterAndNode<V> removed) {
-                throw new UnsupportedOperationException();
-            }
-        };
+    private PeekingIterator<CharacterAndNode<V>> iterator(final int startingIndex) {
+        return new ForwardArrayTrieNodeIterator(startingIndex);
+    }
+
+    @Override
+    public PeekingIterator<CharacterAndNode<V>> reverseIterator() {
+        return reverseIterator(children.length - 1);
+    }
+
+    @Override
+    public PeekingIterator<CharacterAndNode<V>> reverseIterator(char c) {
+        return reverseIterator(charToIndex(c));
+    }
+
+    private PeekingIterator<CharacterAndNode<V>> reverseIterator(final int startingIndex) {
+       return new ReverseArrayTrieNodeIterator(startingIndex);
     }
 
     @Override
@@ -70,4 +75,52 @@ abstract class AbstractArrayTrieNode<V> extends AbstractTrieNode<V> {
     protected abstract char indexToChar(int i);
 
     protected abstract int charsetSize();
+
+    private abstract class ArrayTrieNodeIterator extends AbstractIterator<CharacterAndNode<V>> {
+
+        int index;
+
+        private ArrayTrieNodeIterator(int startingIndex) {
+            this.index = startingIndex;
+        }
+
+        @Override
+        protected void doRemove(CharacterAndNode<V> removed) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private class ForwardArrayTrieNodeIterator extends ArrayTrieNodeIterator {
+
+        private ForwardArrayTrieNodeIterator(int startingIndex) {
+            super(startingIndex);
+        }
+
+        @Override
+        protected CharacterAndNode<V> computeNext() {
+            for (;index < children.length; index++) {
+                if (children[index] != null) {
+                    return new CharacterAndNode<>(indexToChar(index), children[index++]);
+                }
+            }
+            return endOfData();
+        }
+    }
+
+    private class ReverseArrayTrieNodeIterator extends ArrayTrieNodeIterator {
+
+        private ReverseArrayTrieNodeIterator(int startingIndex) {
+            super(startingIndex);
+        }
+
+        @Override
+        protected CharacterAndNode<V> computeNext() {
+            for (;index >= 0; index--) {
+                if (children[index] != null) {
+                    return new CharacterAndNode<>(indexToChar(index), children[index--]);
+                }
+            }
+            return endOfData();
+        }
+    }
 }

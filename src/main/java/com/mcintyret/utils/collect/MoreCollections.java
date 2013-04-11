@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * User: mcintyret2
  * Date: 02/04/2013
@@ -12,6 +14,28 @@ public final class MoreCollections {
 
     private MoreCollections() {
 
+    }
+
+    public static <T, C extends Collection<? extends T>> C largest(C... colls) {
+        checkArgument(colls.length > 0);
+        C largest = null;
+        for (C c : colls) {
+            if (largest == null || c.size() > largest.size()) {
+                largest = c;
+            }
+        }
+        return largest;
+    }
+
+    public static <T, C extends Collection<? extends T>> C smallest(C... colls) {
+        checkArgument(colls.length > 0);
+        C smallest = null;
+        for (C c : colls) {
+            if (smallest == null || c.size() < smallest.size()) {
+                smallest = c;
+            }
+        }
+        return smallest;
     }
 
     public static <T> Collection<T> synchronizedCollection(Collection<T> c) {
@@ -447,7 +471,182 @@ public final class MoreCollections {
         }
     }
 
-    private static final class SynchronizedTrie<V> extends SynchronizedMap<String, V> implements Trie<V> {
+    private static class SynchronizedSortedMap<K, V> extends SynchronizedMap<K, V> implements SortedMap<K, V> {
+
+        private final SortedMap<K, V> delegate;
+
+        private SynchronizedSortedMap(SortedMap<K, V> delegate) {
+            super(delegate);
+            this.delegate = delegate;
+        }
+
+        private SynchronizedSortedMap(SortedMap<K, V> delegate, ReadWriteLock lock) {
+            super(delegate, lock);
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Comparator<? super K> comparator() {
+            return delegate.comparator(); // Doesn't require locking
+        }
+
+        @Override
+        public SortedMap<K, V> subMap(K fromKey, K toKey) {
+            lock.readLock().lock();
+            try {
+                return new SynchronizedSortedMap<>(delegate.subMap(fromKey, toKey), lock);
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public SortedMap<K, V> headMap(K toKey) {
+            lock.readLock().lock();
+            try {
+                return new SynchronizedSortedMap<>(delegate.headMap(toKey), lock);
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public SortedMap<K, V> tailMap(K fromKey) {
+            lock.readLock().lock();
+            try {
+                return new SynchronizedSortedMap<>(delegate.tailMap(fromKey), lock);
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public K firstKey() {
+            lock.readLock().lock();
+            try {
+                return delegate.firstKey();
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public K lastKey() {
+            lock.readLock().lock();
+            try {
+                return delegate.lastKey();
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+    }
+
+    private static class SynchronizedNavigableMap<K, V> extends SynchronizedSortedMap<K, V> implements NavigableMap<K, V> {
+
+        private final NavigableMap<K, V> delegate;
+
+        protected SynchronizedNavigableMap(NavigableMap<K, V> delegate) {
+            super(delegate);
+            this.delegate = delegate;
+        }
+
+        protected SynchronizedNavigableMap(NavigableMap<K, V> delegate, ReadWriteLock lock) {
+            super(delegate, lock);
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Entry<K, V> lowerEntry(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public K lowerKey(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> floorEntry(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public K floorKey(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> ceilingEntry(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public K ceilingKey(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> higherEntry(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public K higherKey(K key) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> firstEntry() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> lastEntry() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> pollFirstEntry() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public Entry<K, V> pollLastEntry() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableMap<K, V> descendingMap() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableSet<K> navigableKeySet() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableSet<K> descendingKeySet() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableMap<K, V> headMap(K toKey, boolean inclusive) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public NavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+    }
+
+    private static final class SynchronizedTrie<V> extends SynchronizedNavigableMap<String, V> implements Trie<V> {
 
         private final Trie<V> delegate;
 
@@ -469,6 +668,26 @@ public final class MoreCollections {
         @Override
         public Trie<V> removeSubTrie(String key) {
             return new SynchronizedTrie<>(delegate.removeSubTrie(key), lock);
+        }
+
+        @Override
+        public Trie<V> subMap(String from, boolean fromInclusive, String to, boolean toInclusive) {
+            return new SynchronizedTrie<>(delegate.subMap(from, fromInclusive, to, toInclusive), lock);
+        }
+
+        @Override
+        public Trie<V> headMap(String to, boolean toInclusive) {
+            return new SynchronizedTrie<>(delegate.headMap(to, toInclusive), lock);
+        }
+
+        @Override
+        public Trie<V> tailMap(String from, boolean fromInclusive) {
+            return new SynchronizedTrie<>(delegate.tailMap(from, fromInclusive), lock);
+        }
+
+        @Override
+        public Trie<V> descendingMap() {
+            return new SynchronizedTrie<>(delegate.descendingMap(), lock);
         }
     }
 }

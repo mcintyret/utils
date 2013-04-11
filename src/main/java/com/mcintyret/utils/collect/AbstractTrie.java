@@ -1,21 +1,24 @@
 package com.mcintyret.utils.collect;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterators.singletonIterator;
+import static com.mcintyret.utils.collect.MoreIterators.*;
 
 /**
  * User: mcintyret2
  * Date: 19/03/2013
- *
+ * <p/>
  * // TODO: make null-safe?
  */
-public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements Trie<V>, Serializable {
+public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> implements Trie<V>, Serializable {
 
     protected abstract TrieNode<V> newTrieNode(V value);
 
@@ -126,7 +129,7 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         return remove((String) key);
     }
 
-    private V remove(String key) {
+    V remove(String key) {
         V removed = doRemove(stripUninterestingChars(key));
         if (removed != null) {
             modifySize(-1);
@@ -158,37 +161,16 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         return null;
     }
 
-    private Set<Entry<String, V>> entrySet;
-
-    @Override
-    public Set<Entry<String, V>> entrySet() {
-        if (entrySet == null) {
-            entrySet = new AbstractSet<Entry<String, V>>() {
-
-                @Override
-                public Iterator<Entry<String, V>> iterator() {
-                    return new LexicographicTrieIterator(getRoot());
-                }
-
-                @Override
-                public int size() {
-                    return AbstractTrie.this.size();
-                }
-            };
-        }
-        return entrySet;
-    }
-
     @Override
     public Trie<V> getSubTrie(String key) {
         TrieNode<V> node = getNode(key);
-        return node == null ? Tries.<V>emptyTrie() : new Subtrie(key, node);
+        return node == null ? Tries.<V>emptyTrie() : new SubTrie(node, key);
     }
 
     @Override
     public Trie<V> removeSubTrie(String key) {
         TrieNode<V> node = removeTrieNode(key);
-        return node == null ? Tries.<V>emptyTrie() : new Subtrie(key, node);
+        return node == null ? Tries.<V>emptyTrie() : new SubTrie(node, key);
     }
 
     private TrieNode<V> removeTrieNode(String key) {
@@ -202,181 +184,10 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
             if (node != null) {
                 parent.setChild(c, null);
             }
-            modifySize(-Iterators.size(new LexicographicTrieIterator(node, key)));
+            modifySize(-Iterators.size(new LexicographicTrieIterator<>(this, node, key, true)));
             return node;
         } else {
             return null;
-        }
-    }
-
-    private class LexicographicTrieIterator extends AbstractHasNextFetchingIterator<Entry<String, V>> {
-
-        private final Stack<Iterator<CharacterAndNode<V>>> iteratorStack = new Stack<>();
-        private Iterator<CharacterAndNode<V>> iterator;
-
-        LexicographicTrieIterator(TrieNode<V> root) {
-            this(root, "");
-        }
-
-        LexicographicTrieIterator(TrieNode<V> node, String prefix) {
-            key = Arrays.copyOf(prefix.toCharArray(), 10);
-            index = prefix.length();
-            iterator = node == null ? Iterators.<CharacterAndNode<V>>emptyIterator() :
-                    singletonIterator(new CharacterAndNode<>('\0', node));
-        }
-
-        private char[] key;
-        private int index;
-
-        @Override
-        public boolean doHasNext() {
-            while (iterator.hasNext()) {
-                final CharacterAndNode<V> charAndNode = iterator.next();
-                updateKey(charAndNode.getChar());
-                iteratorStack.push(iterator);
-                iterator = charAndNode.getNode().iterator();
-                if (charAndNode.getNode().getValue() != null) {
-                    // This is an actual entry of interest
-                    setNext(new Entry<String, V>() {
-
-                        final String thisKey = new String(key, 0, index);
-
-                        @Override
-                        public String getKey() {
-                            return thisKey;
-                        }
-
-                        @Override
-                        public V getValue() {
-                            return charAndNode.getNode().getValue();
-                        }
-
-                        @Override
-                        public V setValue(V value) {
-                            return charAndNode.getNode().setValue(value);
-                        }
-                    });
-                    return true;
-                }
-            }
-            if (!iteratorStack.isEmpty()) {
-                iterator = iteratorStack.pop();
-                index--;
-                return doHasNext();
-            } else {
-                return false;
-            }
-        }
-
-        private void updateKey(char c) {
-            if (c != '\0') {
-                if (index == key.length) {
-                    key = Arrays.copyOf(key, key.length * 2);
-                }
-                key[index++] = c;
-            }
-        }
-
-
-        @Override
-        protected void doRemove(Entry<String, V> removed) {
-            AbstractTrie.this.remove(removed.getKey());
-        }
-    }
-
-    private class Subtrie extends AbstractMap<String, V> implements Trie<V> {
-
-        private final String prefix;
-
-        private TrieNode<V> root;
-
-        public Subtrie(String prefix, TrieNode<V> root) {
-            this.prefix = prefix;
-            this.root = root;
-        }
-
-        @Override
-        public boolean containsKey(Object key) {
-            return get(key) != null;
-        }
-
-        @Override
-        public V put(String key, V val) {
-            checkNotNull(key);
-            checkNotNull(val);
-            checkArgument(checkKey(key));
-            TrieNode<V> node = getSubtrieNode(key, true);
-            V prev = node.setValue(val);
-            if (prev == null) {
-                AbstractTrie.this.modifySize(+1);
-            }
-            return prev;
-        }
-
-        @Override
-        public V get(Object key) {
-            TrieNode<V> node = getSubtrieNode((String) key, false);
-            return node == null ? null : node.getValue();
-        }
-
-        @Override
-        public V remove(Object key) {
-            return remove((String) key);
-        }
-
-        private V remove(String key) {
-            checkArgument(checkKey(key));
-            return AbstractTrie.this.remove(key);
-        }
-
-        private TrieNode<V> getSubtrieNode(String key, boolean create) {
-            if (!checkKey(key)) {
-                return null;
-            }
-            if (root == null && create) {
-                root = newTrieNode(null);
-            }
-            return AbstractTrie.this.getNode(root, key, prefix.length(), key.length() - 1, create);
-        }
-
-        @Override
-        public int size() {
-            return entrySet().size();
-        }
-
-        @Override
-        public Set<Entry<String, V>> entrySet() {
-            return new AbstractSet<Entry<String, V>>() {
-                @Override
-                public Iterator<Entry<String, V>> iterator() {
-                    return new LexicographicTrieIterator(root, prefix);
-                }
-
-                @Override
-                public int size() {
-                    return Iterators.size(iterator());
-                }
-            };
-        }
-
-        @Override
-        public Trie<V> getSubTrie(String key) {
-            return checkKey(key) ? AbstractTrie.this.getSubTrie(key) : Tries.<V>emptyTrie();
-        }
-
-        @Override
-        public Trie<V> removeSubTrie(String key) {
-            return checkKey(key) ? AbstractTrie.this.removeSubTrie(key) : Tries.<V>emptyTrie();
-        }
-
-        @Override
-        public void clear() {
-            AbstractTrie.this.removeSubTrie(prefix);
-            root = null;
-        }
-
-        private boolean checkKey(String key) {
-            return key.startsWith(prefix);
         }
     }
 
@@ -390,4 +201,315 @@ public abstract class AbstractTrie<V> extends AbstractMap<String, V> implements 
         }
         return new String(chars, 0, index);
     }
+
+    @Override
+    public Comparator<String> comparator() {
+        return THE_COMPARATOR;
+    }
+
+    @Override
+    public Trie<V> descendingMap() {
+        return new DescendingTrie();
+    }
+
+    @Override
+    public Trie<V> subMap(String from, boolean fromInclusive, String to, boolean toInclusive) {
+        return new NavigableSubMap(from, fromInclusive, to, toInclusive);
+    }
+
+    @Override
+    public Trie<V> headMap(String to, boolean toInclusive) {
+        return new NavigableSubMap(null, true, to, toInclusive);
+    }
+
+    @Override
+    public Trie<V> tailMap(String from, boolean fromInclusive) {
+        return new NavigableSubMap(from, fromInclusive, null, true);
+    }
+
+    private class DescendingTrie extends DescendingMap<String, V> implements Trie<V> {
+
+        @Override
+        protected Trie<V> forward() {
+            return AbstractTrie.this;
+        }
+
+        @Override
+        protected Iterator<Entry<String, V>> entryIterator() {
+            return descendingEntryIterator();
+        }
+
+        @Override
+        public Trie<V> getSubTrie(String key) {
+            return AbstractTrie.this.getSubTrie(key);
+        }
+
+        @Override
+        public Trie<V> removeSubTrie(String key) {
+            return AbstractTrie.this.removeSubTrie(key);
+        }
+
+        @Override
+        public Trie<V> descendingMap() {
+            return forward();
+        }
+
+        @Override
+        public Trie<V> subMap(String from, boolean fromInclusive, String to, boolean toInclusive) {
+            return (Trie<V>) super.subMap(from, fromInclusive, to, toInclusive);
+        }
+
+        @Override
+        public Trie<V> headMap(String to, boolean toInclusive) {
+            return (Trie<V>) super.headMap(to, toInclusive);
+        }
+
+        @Override
+        public Trie<V> tailMap(String from, boolean fromInclusive) {
+            return (Trie<V>) super.tailMap(from, fromInclusive);
+        }
+    }
+
+    @Override
+    protected Iterator<Entry<String, V>> entryIterator() {
+        return new LexicographicTrieIterator<>(this);
+    }
+
+    @Override
+    protected Iterator<Entry<String, V>> descendingEntryIterator() {
+        return new ReverseTrieIterator<>(this);
+    }
+
+    abstract class AbstractSubTrie extends AbstractTrie<V> {
+
+        private boolean validKey(Object o) {
+            return validKey((String) o);
+        }
+
+        abstract boolean validKey(String key);
+
+        @Override
+        protected TrieNode<V> newTrieNode(V value) {
+            return AbstractTrie.this.newTrieNode(value);
+        }
+
+        @Override
+        public int size() {
+            return Iterators.size(entryIterator());
+        }
+
+        @Override
+        protected void modifySize(int delta) {
+            AbstractTrie.this.modifySize(delta);
+        }
+
+        @Override
+        protected TrieNode<V> getRoot() {
+            return AbstractTrie.this.getRoot();
+        }
+
+        @Override
+        protected void setRootIfNull() {
+            AbstractTrie.this.setRootIfNull();
+        }
+
+        @Override
+        public V get(Object key) {
+            return validKey(key) ? AbstractTrie.this.get(key) : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return validKey(key) && AbstractTrie.this.containsKey(key);
+        }
+
+        @Override
+        public Comparator<String> comparator() {
+            return AbstractTrie.this.comparator();
+        }
+
+        @Override
+        public SortedMap<String, V> subMap(String fromKey, String toKey) {
+            if (!validKey(fromKey) || !validKey(toKey)) {
+                throw new IllegalArgumentException("Invalid keys");
+            } else {
+                return AbstractTrie.this.subMap(fromKey, toKey);
+            }
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return !entrySet().iterator().hasNext();
+        }
+
+    }
+
+    private class SubTrie extends AbstractSubTrie {
+
+        private final String prefix;
+        private TrieNode root;
+
+        public SubTrie(TrieNode root, String prefix) {
+            this.prefix = prefix;
+            this.root = root;
+        }
+
+        @Override
+        boolean validKey(String key) {
+            return key.startsWith(prefix);
+        }
+
+        @Override
+        protected TrieNode<V> getRoot() {
+            return root;
+        }
+
+        @Override
+        protected void setRootIfNull() {
+            if (getRoot() == null) {
+                root = newTrieNode(null);
+            }
+        }
+
+        @Override
+        protected TrieNode<V> getNode(String key, int to, boolean create) {
+            if (create) {
+                setRootIfNull();
+            }
+            return AbstractTrie.this.getNode(getRoot(), key, prefix.length(), to, create);
+        }
+
+        @Override
+        public void clear() {
+            AbstractTrie.this.removeSubTrie(prefix);
+            root = null;
+        }
+
+        @Override
+        protected Iterator<Entry<String, V>> entryIterator() {
+            return new LexicographicTrieIterator<>(AbstractTrie.this, root, prefix, true);
+        }
+
+        @Override
+        protected Iterator<Entry<String, V>> descendingEntryIterator() {
+            return new ReverseTrieIterator<>(AbstractTrie.this, root, prefix, true);
+        }
+
+    }
+
+    private class NavigableSubMap extends AbstractSubTrie {
+        private final String from;
+        private final boolean fromInclusive;
+        private final String to;
+        private final boolean toInclusive;
+        private final boolean fromBottom;
+        private final boolean toTop;
+
+
+        // No fucking idea why this complains, but it compiles and runs OK...
+        public NavigableSubMap(String from, boolean fromInclusive, String to, boolean toInclusive) {
+            this.from = from;
+            this.fromInclusive = fromInclusive;
+            this.fromBottom = from == null;
+            this.to = to;
+            this.toInclusive = toInclusive;
+            this.toTop = to == null;
+        }
+
+        @Override
+        boolean validKey(String key) {
+            return validBottom(key) &&
+                    validTop(key);
+        }
+
+        private boolean validTop(String key) {
+            return toTop || (toInclusive ? key.compareTo(to) <= 0 : key.compareTo(to) < 0);
+        }
+
+        private boolean validBottom(String key) {
+            return fromBottom || (fromInclusive ? from.compareTo(key) <= 0 : from.compareTo(key) < 0);
+        }
+
+        @Override
+        protected Iterator<Entry<String, V>> entryIterator() {
+            return fromBottom ? new ForwardBoundIterator() : new ForwardBoundIterator(from);
+        }
+
+        private class ForwardBoundIterator extends AbstractIterator<Entry<String, V>> {
+
+            private final PeekingIterator<Entry<String, V>> delegate;
+
+            ForwardBoundIterator() {
+                this("");
+            }
+
+            ForwardBoundIterator(String start) {
+                delegate = new LexicographicTrieIterator<>(AbstractTrie.this, start, false);
+                while (delegate.hasNext() && !validBottom(delegate.peek().getKey())) {
+                    delegate.next();
+                }
+            }
+
+            @Override
+            protected Entry<String, V> computeNext() {
+                if (delegate.hasNext() && validTop(delegate.peek().getKey())) {
+                    return delegate.next();
+                } else {
+                    return endOfData();
+                }
+            }
+
+            @Override
+            protected void doRemove(Entry<String, V> removed) {
+                delegate.remove();
+            }
+        }
+
+        @Override
+        protected Iterator<Entry<String, V>> descendingEntryIterator() {
+            return toTop ? new ReverseBoundIterator() : new ReverseBoundIterator(to);
+        }
+
+        private class ReverseBoundIterator extends AbstractIterator<Entry<String, V>> {
+
+            private final PeekingIterator<Entry<String, V>> delegate;
+
+            ReverseBoundIterator() {
+                this("");
+            }
+
+            ReverseBoundIterator(String start) {
+                delegate = new ReverseTrieIterator<>(AbstractTrie.this, start, false);
+                while (delegate.hasNext() && !validTop(delegate.peek().getKey())) {
+                    delegate.next();
+                }
+            }
+
+            @Override
+            protected Entry<String, V> computeNext() {
+                if (delegate.hasNext() && validBottom(delegate.peek().getKey())) {
+                    return delegate.next();
+                } else {
+                    return endOfData();
+                }
+            }
+
+            @Override
+            protected void doRemove(Entry<String, V> removed) {
+                delegate.remove();
+            }
+        }
+
+        @Override
+        public void clear() {
+            MoreIterators.clear(entryIterator());
+        }
+    }
+
+    private static final Comparator<String> THE_COMPARATOR = new Comparator<String>() {
+        @Override
+        public int compare(String o1, String o2) {
+            return o1.compareTo(o2);
+        }
+    };
 }

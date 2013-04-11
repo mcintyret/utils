@@ -1,5 +1,7 @@
 package com.mcintyret.utils.collect;
 
+import com.google.common.collect.PeekingIterator;
+
 import java.io.Serializable;
 
 /**
@@ -19,4 +21,12 @@ interface TrieNode<V> extends Serializable, Iterable<CharacterAndNode<V>> {
     boolean isEmpty();
 
     void clear();
+
+    PeekingIterator<CharacterAndNode<V>> iterator();
+
+    PeekingIterator<CharacterAndNode<V>> iterator(char c);
+
+    PeekingIterator<CharacterAndNode<V>> reverseIterator();
+
+    PeekingIterator<CharacterAndNode<V>> reverseIterator(char c);
 }

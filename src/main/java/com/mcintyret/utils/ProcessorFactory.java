@@ -7,6 +7,14 @@ package com.mcintyret.utils;
  */
 public interface ProcessorFactory<T> {
 
-    Processor<T> newProcessor(T t, ThreadedForEach<T> tfe);
+    Runnable newRunnable(T next);
+
+    Iterable<T> getIterable();
+
+    void beforeExecution();
+
+    void afterExecution();
+
+    boolean shouldExecute(T next);
 
 }

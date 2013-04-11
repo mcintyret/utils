@@ -22,16 +22,15 @@ public class FileIterable implements Iterable<String> {
     @Override
     public Iterator<String> iterator() {
         try {
-            return new AbstractHasNextFetchingIterator<String>() {
+            return new AbstractIterator<String>() {
 
                 BufferedReader reader = new BufferedReader(new FileReader(file));
 
                 @Override
-                protected boolean doHasNext() {
+                protected String computeNext() {
                     try {
                         String line = reader.readLine();
-                        setNext(line);
-                        return line != null;
+                        return line == null ? endOfData() : line;
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -39,7 +38,7 @@ public class FileIterable implements Iterable<String> {
 
                 @Override
                 protected void doRemove(String removed) {
-
+                    throw new UnsupportedOperationException();
                 }
             };
         } catch (FileNotFoundException e) {

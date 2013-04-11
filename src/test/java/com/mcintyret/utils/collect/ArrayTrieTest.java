@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.common.collect.Iterables.elementsEqual;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -92,7 +93,7 @@ public class ArrayTrieTest {
         assertTrue(set.contains(baz));
     }
 
-    public void shouldGetAll() {
+    public void shouldGetSubTrie() {
         Trie<Object> trie = Tries.newSingleCaseArrayTrie();
 
         trie.put("foo", foo);
@@ -177,5 +178,94 @@ public class ArrayTrieTest {
         assertFalse(trie.containsKey("fooble"));
 
     }
+
+    public void shouldGetFirstKey() {
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
+
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
+
+        assertEquals("bar", trie.firstKey());
+    }
+
+    public void shouldGetLastKey() {
+        Trie<Object> trie = Tries.newSingleCaseArrayTrie();
+
+        trie.put("foo", foo);
+        trie.put("foobar", foobar);
+        trie.put("bar", bar);
+        trie.put("baz", baz);
+
+        assertEquals("foobar", trie.lastKey());
+    }
+
+    public void shouldIterateInReverseLexicographicOrder() {
+        Trie<String> trie = Tries.newSingleCaseArrayTrie();
+        for (int i = 0; i < 5000; i++) {
+            String str = RandomStringUtils.randomAlphabetic(RandomUtils.nextIntBetween(2, 7));
+            trie.put(str, str);
+        }
+        List<String> trieList = Lists.newArrayList(trie.descendingKeySet());
+        System.out.println(trieList);
+        List<String> sortedCopy = Lists.newArrayList(trieList);
+        Collections.sort(sortedCopy, Collections.reverseOrder(String.CASE_INSENSITIVE_ORDER));
+
+        assertEquals(sortedCopy, trieList);
+        assertEquals(trieList.size(), trie.size());
+    }
+
+    public void shouldGetSubMap() {
+        Trie<String> trie = trieOf("aa", "aab", "foo", "foobar", "ku", "za");
+
+        Trie<String> submap = trie.subMap("aaa", true, "ku", false);
+
+        System.out.println(submap);
+        assertEquals(3, submap.size());
+        assertTrue(elementsEqual(Lists.newArrayList("aab", "foo", "foobar"), submap.keySet()));
+
+        System.out.println(submap.descendingMap());
+        assertTrue(elementsEqual(Lists.newArrayList("foobar", "foo", "aab"), submap.descendingKeySet()));
+
+        submap.clear();
+        System.out.println(submap);
+        assertTrue(submap.isEmpty());
+
+        assertEquals(3, trie.size());
+        assertTrue(trie.containsKey("aa"));
+        assertFalse(trie.containsKey("aab"));
+        assertFalse(trie.containsKey("foo"));
+        assertFalse(trie.containsKey("foobar"));
+        assertTrue(trie.containsKey("ku"));
+        assertTrue(trie.containsKey("za"));
+    }
+
+    public void shouldNavigate() {
+        Trie<String> trie = trieOf("aa", "aab", "foo", "foobar", "ku", "za");
+
+        assertEquals("foobar", trie.higherKey("foo"));
+        assertEquals("za", trie.lastKey());
+        assertEquals("aab", trie.ceilingKey("aab"));
+        assertEquals("aab", trie.ceilingKey("aaa"));
+        assertEquals("aa", trie.floorKey("aaa"));
+        assertNull(trie.lowerKey("aa"));
+        assertNull(trie.higherKey("za"));
+        assertEquals("foo", trie.floorKey("foo"));
+        assertEquals("foo", trie.lowerKey("foobar"));
+        assertEquals("aa", trie.firstKey());
+    }
+
+    private static Trie<String> addToTrie(Trie<String> trie, String... toAdd) {
+        for (String string : toAdd) {
+            trie.put(string, string);
+        }
+        return trie;
+    }
+
+    private static Trie<String> trieOf(String... toAdd) {
+        return addToTrie(Tries.<String>newSingleCaseArrayTrie(), toAdd);
+    }
+
 
 }

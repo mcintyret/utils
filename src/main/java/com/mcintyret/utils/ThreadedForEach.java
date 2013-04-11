@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: mcintyret2
@@ -22,9 +23,8 @@ public class ThreadedForEach<T> {
 
     private final Map<T, Future<?>> futures;
 
-
-    public ThreadedForEach(Iterable<T> iterable, ProcessorFactory<T> processorFactory, ExecutorService executor) {
-        this.iterable = iterable;
+    public ThreadedForEach(ProcessorFactory<T> processorFactory, ExecutorService executor) {
+        this.iterable = processorFactory.getIterable();
         this.factory = processorFactory;
         this.executor = executor;
         if (iterable instanceof Collection) {
@@ -34,29 +34,38 @@ public class ThreadedForEach<T> {
         }
     }
 
-    public ThreadedForEach(Iterable<T> iterable, ProcessorFactory<T> processorFactory) {
-        this(iterable, processorFactory, Executors.newFixedThreadPool(5));
+    public ThreadedForEach(ProcessorFactory<T> processorFactory) {
+        this(processorFactory, Executors.newFixedThreadPool(10));
     }
 
     private volatile boolean running = false;
 
     public final void execute() {
+        factory.beforeExecution();
         Iterator<T> iterator  = iterable.iterator();
+
+        running = true;
         while(running && iterator.hasNext()) {
             T next = iterator.next();
-            futures.put(next, executor.submit(factory.newProcessor(next, this)));
+            if (factory.shouldExecute(next)) {
+                futures.put(next, executor.submit(factory.newRunnable(next)));
+            }
         }
+        stop();
         executor.shutdown();
+
+        factory.afterExecution();
     }
 
-    public void cancel(T t) {
+    public final void cancel(T t) {
         Future<?> f = futures.get(t);
         if (f != null) {
             f.cancel(true);
         }
     }
 
-    public void cancelAll() {
+    public final void cancelAll() {
+        stop();
         executor.shutdownNow();
     }
 
@@ -64,7 +73,20 @@ public class ThreadedForEach<T> {
         running = false;
     }
 
-    public final boolean isShutDown() {
-        return executor.isShutdown();
+    public final boolean isTerminated() {
+        return executor.isTerminated();
+    }
+
+    public final boolean isRunning() {
+        return running;
+    }
+
+    public final boolean awaitTermination(long timeoutMillis) {
+        try {
+            return executor.awaitTermination(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.mcintyret.utils.collect;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -95,5 +97,42 @@ public final class MoreIterators {
 
     public static <T> ListIterator<T> lockedListIterator(ListIterator<T> iterator, Lock lock) {
         return new LockedListIterator<>(iterator, lock, lock);
+    }
+
+    public static <T> PeekingIterator<T> lockedPeekingIterator(PeekingIterator<T> iterator, ReadWriteLock lock) {
+        return new LockedPeekingIterator<>(iterator, lock.readLock(), lock.writeLock());
+    }
+
+    public static <T> T nextOrNull(Iterator<T> iterator) {
+        return iterator.hasNext() ? iterator.next() : null;
+    }
+
+    public static <F, T> Iterator<T> transform(final Iterator<F> delegate, final Function<? super F, ? extends T> function) {
+        return new Iterator<T>() {
+            @Override
+            public boolean hasNext() {
+                return delegate.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return function.apply(delegate.next());
+            }
+
+            @Override
+            public void remove() {
+                delegate.remove();
+            }
+        };
+    }
+
+    public static <T> T pollNext(Iterator<T> it) {
+        if (it.hasNext()) {
+            T ret = it.next();
+            it.remove();
+            return ret;
+        } else {
+            return null;
+        }
     }
 }

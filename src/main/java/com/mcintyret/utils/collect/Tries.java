@@ -1,6 +1,6 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.PeekingIterator;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -60,23 +60,23 @@ public final class Tries {
         return new VeryConcurrentTrie<>(new StrategyFollowingArrayTrie<T>(ArrayTrieStrategy.MIXED_CASE_NUMERIC));
     }
 
-    public static <T> Trie<T> newHashTrie() {
-        return new AbstractTrie<T>() {
-            @Override
-            protected TrieNode<T> newTrieNode(T value) {
-                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newHashMap(), value);
-            }
-        };
-    }
-
-    public static <T> Trie<T> newConcurrentHashTrie() {
-        return new ConcurrentTrie<T>(new AbstractTrie<T>() {
-            @Override
-            protected TrieNode<T> newTrieNode(T value) {
-                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newConcurrentMap(), value);
-            }
-        });
-    }
+//    public static <T> Trie<T> newHashTrie() {
+//        return new AbstractTrie<T>() {
+//            @Override
+//            protected TrieNode<T> newTrieNode(T value) {
+//                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newHashMap(), value);
+//            }
+//        };
+//    }
+//
+//    public static <T> Trie<T> newConcurrentHashTrie() {
+//        return new ConcurrentTrie<>(new AbstractTrie<T>() {
+//            @Override
+//            protected TrieNode<T> newTrieNode(T value) {
+//                return new MapTrieNode<>(Maps.<Character, TrieNode<T>>newConcurrentMap(), value);
+//            }
+//        });
+//    }
 
     private static class ConcurrentTrie<T> extends AbstractTrie<T> {
 
@@ -117,6 +117,18 @@ public final class Tries {
                 return delegate.size();
             } finally {
                 sizeLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public void clear() {
+            rootLock.writeLock().lock();
+            sizeLock.writeLock().lock();
+            try {
+                delegate.clear();
+            } finally {
+                rootLock.writeLock().unlock();
+                sizeLock.writeLock().unlock();
             }
         }
 
@@ -255,10 +267,40 @@ public final class Tries {
             }
 
             @Override
-            public Iterator<CharacterAndNode<V>> iterator() {
+            public PeekingIterator<CharacterAndNode<V>> iterator() {
                 lock.readLock().lock();
                 try {
-                    return MoreIterators.lockedIterator(node.iterator(), lock);
+                    return MoreIterators.lockedPeekingIterator(node.iterator(), lock);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public PeekingIterator<CharacterAndNode<V>> iterator(char c) {
+                lock.readLock().lock();
+                try {
+                    return MoreIterators.lockedPeekingIterator(node.iterator(c), lock);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public PeekingIterator<CharacterAndNode<V>> reverseIterator() {
+                lock.readLock().lock();
+                try {
+                    return MoreIterators.lockedPeekingIterator(node.reverseIterator(), lock);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            @Override
+            public PeekingIterator<CharacterAndNode<V>> reverseIterator(char c) {
+                lock.readLock().lock();
+                try {
+                    return MoreIterators.lockedPeekingIterator(node.reverseIterator(c), lock);
                 } finally {
                     lock.readLock().unlock();
                 }
@@ -418,6 +460,126 @@ public final class Tries {
 
         @Override
         public void clear() {
+        }
+
+        @Override
+        public Comparator<? super String> comparator() {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> lowerEntry(String key) {
+            return null;
+        }
+
+        @Override
+        public String lowerKey(String key) {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> floorEntry(String key) {
+            return null;
+        }
+
+        @Override
+        public String floorKey(String key) {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> ceilingEntry(String key) {
+            return null;
+        }
+
+        @Override
+        public String ceilingKey(String key) {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> higherEntry(String key) {
+            return null;
+        }
+
+        @Override
+        public String higherKey(String key) {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> firstEntry() {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> lastEntry() {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> pollFirstEntry() {
+            return null;
+        }
+
+        @Override
+        public Entry<String, Object> pollLastEntry() {
+            return null;
+        }
+
+        @Override
+        public Trie<Object> descendingMap() {
+            return this;
+        }
+
+        @Override
+        public NavigableSet<String> navigableKeySet() {
+            return null;// TODO: fix this?
+        }
+
+        @Override
+        public NavigableSet<String> descendingKeySet() {
+            return null;// TODO: fix this?
+        }
+
+        @Override
+        public Trie<Object> subMap(String fromKey, boolean fromInclusive, String toKey, boolean toInclusive) {
+            return this;
+        }
+
+        @Override
+        public Trie<Object> headMap(String toKey, boolean inclusive) {
+            return this;
+        }
+
+        @Override
+        public Trie<Object> tailMap(String fromKey, boolean inclusive) {
+            return this;
+        }
+
+        @Override
+        public SortedMap<String, Object> subMap(String fromKey, String toKey) {
+            return this;
+        }
+
+        @Override
+        public SortedMap<String, Object> headMap(String toKey) {
+            return this;
+        }
+
+        @Override
+        public SortedMap<String, Object> tailMap(String fromKey) {
+            return this;
+        }
+
+        @Override
+        public String firstKey() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public String lastKey() {
+            throw new NoSuchElementException();
         }
 
         @Override
