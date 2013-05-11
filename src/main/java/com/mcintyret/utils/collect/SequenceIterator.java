@@ -6,7 +6,7 @@ import java.util.*;
  * User: mcintyret2
  * Date: 18/03/2013
  */
-class SequenceIterator<E> implements Iterator<E> {
+class SequenceIterator<E> extends AbstractIterator<E> {
 
     private final Sequence<E> sequence;
 
@@ -24,36 +24,19 @@ class SequenceIterator<E> implements Iterator<E> {
         this.initialIterator = prev.iterator();
     }
 
-    protected E next;
-
     @Override
-    public boolean hasNext() {
-        if (next == null) {
-            computeNext();
-        }
-        return next != null;
-    }
-
-    @Override
-    public E next() {
-        if (hasNext()) {
-            E next = this.next;
-            this.next = null;
-            return next;
-        } else {
-            throw new NoSuchElementException();
-        }
-    }
-
-    @Override
-    public void remove() {
+    protected void doRemove(E removed) {
         throw new UnsupportedOperationException();
     }
 
-    private void computeNext() {
+    @Override
+    protected E computeNext() {
         E next = initialIterator.hasNext() ? initialIterator.next() : sequence.computeNext(prev);
-        prev.add(next);
-        this.next = next;
+        if (next == null) {
+            return endOfData();
+        } else {
+            prev.add(next);
+            return next;
+        }
     }
-
 }

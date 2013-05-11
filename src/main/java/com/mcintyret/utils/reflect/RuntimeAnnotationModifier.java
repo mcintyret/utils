@@ -10,22 +10,14 @@ import java.util.Map;
  */
 public class RuntimeAnnotationModifier {
 
-    private static final Field field = getField();
+    private static final Field CLASS_ANNOTATIONS_FIELD = ReflectionUtils.getAccessibleField(Class.class, "annotations");
 
-    private static Field getField() {
+    public static <A extends Annotation> A setClassAnnotation(Class<?> clazz, A annotation) {
         try {
-            Field field = Class.class.getField("annotations");
-            field.setAccessible(true);
-            return field;
-        } catch (NoSuchFieldException e) {
-            throw new IllegalStateException(e);
+            Map<Class<? extends Annotation>, Annotation> annotationMap = (Map<Class<? extends Annotation>, Annotation>) CLASS_ANNOTATIONS_FIELD.get(clazz);
+            return (A) annotationMap.put(annotation.getClass(), annotation);
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e);
         }
     }
-
-    public static void setClassAnnotation(Class<?> clazz, Annotation annotation) {
-        try {
-        Map<Class<? extends Annotation>, Annotation> annotationMap = field.get(clazz);
-        } catch ()
-    }
-
 }

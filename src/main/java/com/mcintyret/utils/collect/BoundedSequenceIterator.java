@@ -2,7 +2,8 @@ package com.mcintyret.utils.collect;
 
 import java.util.Collection;
 
-import static com.mcintyret.utils.Comparables.lessThanOrEqual;
+import static com.mcintyret.utils.Comparables.equal;
+import static com.mcintyret.utils.Comparables.lessThan;
 
 /**
  * User: mcintyret2
@@ -17,8 +18,24 @@ class BoundedSequenceIterator<E extends Comparable<E>> extends SequenceIterator<
         this.max = max;
     }
 
+    private boolean finished = false;
+
     @Override
-    public boolean hasNext() {
-        return super.hasNext() && lessThanOrEqual(next, max);
+    protected E computeNext() {
+        if (finished) {
+            return endOfData();
+        } else {
+            E next = super.computeNext();
+            if (next == null) {
+                return endOfData();
+            } else if (lessThan(next, max)) {
+                return next;
+            } else if (equal(next, max)) {
+                finished = true;
+                return next;
+            } else {
+                return endOfData();
+            }
+        }
     }
 }

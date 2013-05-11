@@ -20,6 +20,14 @@ public class RangeIterablesTest {
                 "bar", "bas", "bat", "bau", "bav", "baw", "bax", "bay", "baz");
     }
 
+    public void shouldMakeStringRangeToLimit() {
+        List<String> list = Lists.newArrayList(RangeIterables.ofRange("aa", "zz"));
+
+        assertEquals(26 * 26, list.size());
+        assertEquals("aa", list.get(0));
+        assertEquals("zz", list.get(list.size() - 1));
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void shouldFailForStringRangeOfDifferentLengths() {
         RangeIterables.ofRange("left", "right");

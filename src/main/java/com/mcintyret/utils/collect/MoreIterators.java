@@ -4,10 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -134,5 +131,31 @@ public final class MoreIterators {
         } else {
             return null;
         }
+    }
+
+    public static <C extends Comparable<C>> PeekingIterator<C> withinBounds(Iterator<C> it, C from, C to) {
+        return withinBounds(it, from, true, to, false);
+    }
+
+    public static <C extends Comparable<C>> PeekingIterator<C> withinBounds(Iterator<C> it, C from, boolean fromInclusive, C to, boolean toInclusive) {
+        return new BoundIterator<C>(it, from, fromInclusive, to, toInclusive) {
+            @Override
+            protected int compare(C one, C two) {
+                return one.compareTo(two);
+            }
+        };
+    }
+
+    public static <T> PeekingIterator<T> withinBounds(Iterator<T> it, T from, T to, final Comparator<T> comparator) {
+        return withinBounds(it, from, true, to, false, comparator);
+    }
+
+    public static <T> PeekingIterator<T> withinBounds(Iterator<T> it, T from, boolean fromInclusive, T to, boolean toInclusive, final Comparator<T> comparator) {
+        return new BoundIterator<T>(it, from, fromInclusive, to, toInclusive) {
+            @Override
+            protected int compare(T one, T two) {
+                return comparator.compare(one, two);
+            }
+        };
     }
 }

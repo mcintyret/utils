@@ -53,6 +53,10 @@ public final class Comparables {
         return (Comparator<K>) ComparableComparator.INSTANCE;
     }
 
+    public static <C extends Comparable<C>> Comparator<Map.Entry<C, ?>> entryKeyComparator() {
+        return new ComparableKeyEntryComparator<>();
+    }
+
     public static <K extends Comparable<K>, V> Comparator<Map.Entry<K, V>> entryComparator(Comparator<K> keyComp) {
         return new Comparator<Map.Entry<K, V>>() {
             @Override
@@ -68,5 +72,14 @@ public final class Comparables {
         public int compare(Object o1, Object o2) {
             return ((Comparable<Object>) o1).compareTo(o2);
         }
-    };
+    }
+
+    private static class ComparableKeyEntryComparator<C extends Comparable<C>> implements Comparator<Map.Entry<C, ?>> {
+        private static final Comparator<Map.Entry<? extends Comparable, ?>> INSTANCE = new ComparableKeyEntryComparator();
+
+        @Override
+        public int compare(Map.Entry<C, ?> o1, Map.Entry<C, ?> o2) {
+            return o1.getKey().compareTo(o2.getKey());
+        }
+    }
 }

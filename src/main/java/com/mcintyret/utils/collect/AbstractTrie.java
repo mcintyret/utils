@@ -2,15 +2,14 @@ package com.mcintyret.utils.collect;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.mcintyret.utils.Comparables;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.SortedMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.mcintyret.utils.collect.MoreIterators.*;
 
 /**
  * User: mcintyret2
@@ -184,7 +183,7 @@ public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> im
             if (node != null) {
                 parent.setChild(c, null);
             }
-            modifySize(-Iterators.size(new LexicographicTrieIterator<>(this, node, key, true)));
+            modifySize(-Iterators.size(new LexicographicTrieIterator<>(this, node, key)));
             return node;
         } else {
             return null;
@@ -387,12 +386,12 @@ public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> im
 
         @Override
         protected Iterator<Entry<String, V>> entryIterator() {
-            return new LexicographicTrieIterator<>(AbstractTrie.this, root, prefix, true);
+            return new LexicographicTrieIterator<>(AbstractTrie.this, root, prefix);
         }
 
         @Override
         protected Iterator<Entry<String, V>> descendingEntryIterator() {
-            return new ReverseTrieIterator<>(AbstractTrie.this, root, prefix, true);
+            return new ReverseTrieIterator<>(AbstractTrie.this, root, prefix);
         }
 
     }
@@ -444,7 +443,7 @@ public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> im
             }
 
             ForwardBoundIterator(String start) {
-                delegate = new LexicographicTrieIterator<>(AbstractTrie.this, start, false);
+                delegate = new LexicographicTrieIterator<>(AbstractTrie.this, start);
                 while (delegate.hasNext() && !validBottom(delegate.peek().getKey())) {
                     delegate.next();
                 }
@@ -479,7 +478,7 @@ public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> im
             }
 
             ReverseBoundIterator(String start) {
-                delegate = new ReverseTrieIterator<>(AbstractTrie.this, start, false);
+                delegate = new ReverseTrieIterator<>(AbstractTrie.this, start);
                 while (delegate.hasNext() && !validTop(delegate.peek().getKey())) {
                     delegate.next();
                 }
@@ -512,4 +511,5 @@ public abstract class AbstractTrie<V> extends AbstractNavigableMap<String, V> im
             return o1.compareTo(o2);
         }
     };
+
 }

@@ -3,7 +3,6 @@ package com.mcintyret.utils;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +28,7 @@ public final class EnumUtils {
                 set.add(vals[i]);
             }
         }
-        return Collections.unmodifiableSet(set);
+        return set;
     }
 
     public static <V, E extends Enum<E>> Map<V, E> toMap(Class<E> enumClass, Function<E, V> function) {

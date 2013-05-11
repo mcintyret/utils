@@ -45,6 +45,11 @@ public abstract class AbstractWriterSerializer implements Serializer {
         }
     }
 
+    @Override
+    public <T> T deserialize(InputStream is, Class<T> clazz) {
+        return deserialize(new InputStreamReader(is), clazz);
+    }
+
     private String preprocessFileName(String filename) {
         return filename.endsWith(getSuffix()) ? filename : filename + getSuffix();
     }

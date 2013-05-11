@@ -3,63 +3,49 @@ package com.mcintyret.utils.collect;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Stack;
 
 import static com.google.common.collect.Iterators.singletonIterator;
 
 /**
-* User: mcintyret2
-* Date: 09/04/2013
-*/
-class LexicographicTrieIterator<T> extends AbstractIterator<Map.Entry<String, T>> {
+ * User: mcintyret2
+ * Date: 09/04/2013
+ */
+class LexicographicTrieIterator<V> extends AbstractTrieIterator<V> {
 
-    private final Stack<Iterator<CharacterAndNode<T>>> iteratorStack = new Stack<>();
-    private Iterator<CharacterAndNode<T>> iterator;
-    private final AbstractTrie<T> trie;
-
-    LexicographicTrieIterator(AbstractTrie<T> trie) {
-        this(trie, "", true);
+    LexicographicTrieIterator(AbstractTrie<V> trie) {
+        this(trie, trie.getRoot(), "");
     }
 
-    LexicographicTrieIterator(AbstractTrie<T> trie, String prefix, boolean subtrie) {
-        this(trie, trie.getNode(prefix, false), prefix, subtrie);
+    LexicographicTrieIterator(AbstractTrie<V> trie, TrieNode<V> baseNode, String prefix) {
+        super(trie, prefix);
+        index = prefix.length();
+        iterator = baseNode == null ? Iterators.<CharacterAndNode<V>>emptyIterator() :
+                singletonIterator(new CharacterAndNode<>('\0', baseNode));
     }
 
-    LexicographicTrieIterator(AbstractTrie<T> trie, TrieNode<T> baseNode, String prefix, boolean subtrie) {
-        this.trie = trie;
-        key = Arrays.copyOf(prefix.toCharArray(), 10);
-        if (subtrie) {
-            index = prefix.length();
-            iterator = baseNode == null ? Iterators.<CharacterAndNode<T>>emptyIterator() :
-                    singletonIterator(new CharacterAndNode<>('\0', baseNode));
-        } else {
-            TrieNode<T> node = trie.getRoot();
-            for (int i = 0; i < prefix.length(); i++) {
-                PeekingIterator<CharacterAndNode<T>> it = node.iterator(prefix.charAt(i));
-                iteratorStack.push(it);
-                if (it.hasNext() && it.peek().getChar() == prefix.charAt(i)) {
-                    if (i != prefix.length() - 1) {
-                        index++;
-                        node = it.next().getNode();
-                    }
-                } else {
-                    break;
+    LexicographicTrieIterator(AbstractTrie<V> trie, String prefix) {
+        super(trie, prefix);
+        TrieNode<V> node = trie.getRoot();
+        for (int i = 0; i < prefix.length(); i++) {
+            PeekingIterator<CharacterAndNode<V>> it = node.iterator(prefix.charAt(i));
+            iteratorStack.push(it);
+            if (it.hasNext() && it.peek().getChar() == prefix.charAt(i)) {
+                if (i != prefix.length() - 1) {
+                    index++;
+                    node = it.next().getNode();
                 }
+            } else {
+                break;
             }
-            iterator = iteratorStack.pop();
         }
+        iterator = iteratorStack.pop();
     }
-
-    private char[] key;
-    private int index;
 
     @Override
-    protected Map.Entry<String, T> computeNext() {
+    protected Map.Entry<String, V> computeNext() {
         while (iterator.hasNext()) {
-            final CharacterAndNode<T> charAndNode = iterator.next();
+            final CharacterAndNode<V> charAndNode = iterator.next();
             updateKey(charAndNode.getChar());
             iteratorStack.push(iterator);
             iterator = charAndNode.getNode().iterator();
@@ -75,21 +61,6 @@ class LexicographicTrieIterator<T> extends AbstractIterator<Map.Entry<String, T>
         } else {
             return endOfData();
         }
-    }
-
-    private void updateKey(char c) {
-        if (c != '\0') {
-            if (index == key.length) {
-                key = Arrays.copyOf(key, key.length * 2);
-            }
-            key[index++] = c;
-        }
-    }
-
-
-    @Override
-    protected void doRemove(Map.Entry<String, T> removed) {
-        trie.remove(removed.getKey());
     }
 
 }

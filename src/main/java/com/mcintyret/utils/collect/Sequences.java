@@ -1,5 +1,6 @@
 package com.mcintyret.utils.collect;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -33,6 +34,13 @@ public final class Sequences {
                 chars[pos]++;
                 return new String(chars);
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        Iterator<String> it = new SequenceIterator<String>(LexicographicSequence.INSTANCE, "aaa");
+        while(it.hasNext()) {
+            System.out.println(it.next());
         }
     }
 

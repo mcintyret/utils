@@ -1,8 +1,13 @@
 package com.mcintyret.utils.serialize;
 
 import com.google.common.collect.*;
-import com.google.common.reflect.TypeToken;
-import com.mcintyret.utils.serialize.AbstractWriterSerializer;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -71,16 +76,16 @@ public class JsonSerializer extends AbstractWriterSerializer {
 
     @Override
     public void serialize(Object obj, Writer writer) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        GSON.toJson(obj, writer);
     }
 
     @Override
     public <T> T deserialize(Reader reader, Class<T> clazz) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return GSON.fromJson(reader, clazz);
     }
 
     @Override
     public String getSuffix() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return ".json";
     }
 }

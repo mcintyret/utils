@@ -78,6 +78,18 @@ public enum ThreeValueLogic {
 
     public abstract boolean asBoolean();
 
+    public ThreeValueLogic and(boolean other) {
+        return and(valueOf(other));
+    }
+
+    public ThreeValueLogic or(boolean other) {
+        return or(valueOf(other));
+    }
+
+    public static ThreeValueLogic valueOf(boolean b) {
+        return b ? TRUE : FALSE;
+    }
+
     public static class UnknownStateToBooleanException extends RuntimeException {
 
     }
