@@ -17,22 +17,24 @@ public abstract class FluentList<E> extends ForwardingList<E> {
 
     public static <T> FluentList<T> ofList(final List<T> list) {
         return list instanceof FluentList ? (FluentList<T>) list :
-                new FluentList<T>() {
-                    @Override
-                    protected List<T> delegate() {
-                        return list;
-                    }
-                };
+            new FluentList<T>() {
+                @Override
+                protected List<T> delegate() {
+                    return list;
+                }
+            };
     }
 
     public FluentList<E> sort() {
-        Collections.sort((List<Comparable>) this);
-        return this;
+        List<E> copy = Lists.newArrayList(delegate());
+        Collections.sort((List<Comparable>) copy);
+        return ofList(copy);
     }
 
     public FluentList<E> sort(Comparator<E> comparator) {
-        Collections.sort(this, comparator);
-        return this;
+        List<E> copy = Lists.newArrayList(delegate());
+        Collections.sort(copy, comparator);
+        return ofList(copy);
     }
 
     public FluentList<E> reverse() {

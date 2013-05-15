@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class JsonSerializer extends AbstractWriterSerializer {
 
-    private static final Gson GSON = new GsonBuilder()
+    private GsonBuilder gsonBuilder = new GsonBuilder()
         .registerTypeAdapterFactory(new TypeAdapterFactory() {
             @Override
             public <T> TypeAdapter<T> create(final Gson gson, TypeToken<T> type) {
@@ -71,21 +71,34 @@ public class JsonSerializer extends AbstractWriterSerializer {
                     return null;
                 }
             }
-        }).create();
+        });
 
+    private Gson gson;
 
     @Override
     public void serialize(Object obj, Writer writer) {
-        GSON.toJson(obj, writer);
+        ensureGsonBuilt();
+        gson.toJson(obj, writer);
     }
 
     @Override
     public <T> T deserialize(Reader reader, Class<T> clazz) {
-        return GSON.fromJson(reader, clazz);
+        ensureGsonBuilt();
+        return gson.fromJson(reader, clazz);
     }
 
     @Override
     public String getSuffix() {
         return ".json";
+    }
+
+    public GsonBuilder configure() {
+        return gsonBuilder;
+    }
+
+    private void ensureGsonBuilt() {
+        if (gson == null) {
+            gson = gsonBuilder.create();
+        }
     }
 }

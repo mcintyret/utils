@@ -1,9 +1,6 @@
 package com.mcintyret.utils.serialize;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * User: mcintyret2
@@ -12,6 +9,8 @@ import java.io.Writer;
 public interface Serializer {
 
     public void serialize(Object obj, String fileName);
+
+    public void serialize(Object obj, File file);
 
     public void serialize(Object obj, Writer writer);
 
@@ -22,6 +21,8 @@ public interface Serializer {
     public <T> T deserializeFromString(String str, Class<T> clazz);
 
     public <T> T deserialize(String fileName, Class<T> clazz);
+
+    public <T> T deserialize(File file, Class<T> clazz);
 
     public <T> T deserialize(InputStream is, Class<T> clazz);
 

@@ -4,6 +4,7 @@ import com.google.common.collect.Iterators;
 import com.mcintyret.utils.Utils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * User: mcintyret2
@@ -47,6 +48,17 @@ public class MapUtils {
                 return map.remove(o) != null;
             }
         };
+    }
+
+    public static <K, V> V putOnce(ConcurrentMap<K, V> map, K key, Loader<V> loader)  {
+        V existing = map.get(key);
+        if (existing == null) {
+            V newValue = loader.load();
+            existing = map.putIfAbsent(key, newValue);
+            return existing == null ? newValue : existing;
+        } else {
+            return existing;
+        }
     }
 
     public static <V> Map.Entry<String, V> trieNodeEntry(final TrieNode<V> node, final String key) {

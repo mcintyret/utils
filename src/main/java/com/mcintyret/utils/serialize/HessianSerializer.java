@@ -12,7 +12,17 @@ import java.io.OutputStream;
  * User: mcintyret2
  * Date: 11/05/2013
  */
-public class HessianSerializer extends AbstractOutputStreamSerializer {
+public class HessianSerializer extends AbstractStreamSerializer {
+
+    private static final Serializer INSTANCE = new HessianSerializer();
+
+    public static Serializer getInstance() {
+        return INSTANCE;
+    }
+
+    private HessianSerializer() {
+
+    }
 
     @Override
     public void serialize(Object obj, OutputStream os) {

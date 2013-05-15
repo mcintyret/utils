@@ -8,12 +8,12 @@ import java.io.*;
  * User: mcintyret2
  * Date: 10/05/2013
  */
-public abstract class AbstractWriterSerializer implements Serializer {
+public abstract class AbstractWriterSerializer extends AbstractSerializer {
 
     @Override
-    public void serialize(Object obj, String fileName) {
+    public void serialize(Object obj, File file) {
         try {
-            serialize(obj, new BufferedWriter(new FileWriter(preprocessFileName(fileName))));
+            serialize(obj, new BufferedWriter(new FileWriter(file)));
         } catch (IOException e) {
             throw new RuntimeIoException(e);
         }
@@ -37,9 +37,9 @@ public abstract class AbstractWriterSerializer implements Serializer {
     }
 
     @Override
-    public <T> T deserialize(String filename, Class<T> clazz) {
+    public <T> T deserialize(File file, Class<T> clazz) {
         try {
-            return deserialize(new BufferedReader(new FileReader(preprocessFileName(filename))), clazz);
+            return deserialize(new BufferedReader(new FileReader(file)), clazz);
         } catch (FileNotFoundException e) {
             throw new RuntimeIoException(e);
         }
@@ -48,9 +48,5 @@ public abstract class AbstractWriterSerializer implements Serializer {
     @Override
     public <T> T deserialize(InputStream is, Class<T> clazz) {
         return deserialize(new InputStreamReader(is), clazz);
-    }
-
-    private String preprocessFileName(String filename) {
-        return filename.endsWith(getSuffix()) ? filename : filename + getSuffix();
     }
 }

@@ -8,7 +8,17 @@ import java.io.*;
  * User: mcintyret2
  * Date: 10/05/2013
  */
-public class JavaSerializer extends AbstractOutputStreamSerializer {
+public class JavaSerializer extends AbstractStreamSerializer {
+
+    private static final JavaSerializer INSTANCE = new JavaSerializer();
+
+    public static Serializer getInstance() {
+        return INSTANCE;
+    }
+
+    private JavaSerializer() {
+
+    }
 
     @Override
     public void serialize(Object obj, OutputStream os) {

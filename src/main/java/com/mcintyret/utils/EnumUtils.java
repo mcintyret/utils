@@ -2,6 +2,7 @@ package com.mcintyret.utils;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -37,6 +38,22 @@ public final class EnumUtils {
             builder.put(function.apply(enumVal), enumVal);
         }
         return builder.build();
+    }
+
+    public static <K, V, E extends Enum<E>> Map<E, V> transformMap(Map<K, V> input, Class<E> enumClass, Function<K, E> function) {
+        Map<E, V> enumMap = Maps.newEnumMap(enumClass);
+        for (Map.Entry<K, V> entry : input.entrySet()) {
+            E e = null;
+            try {
+                e = function.apply(entry.getKey());
+            } catch (Exception swallowed) {
+                // gulp
+            }
+            if (e != null) {
+                enumMap.put(e, entry.getValue());
+            }
+        }
+        return enumMap;
     }
 }
 

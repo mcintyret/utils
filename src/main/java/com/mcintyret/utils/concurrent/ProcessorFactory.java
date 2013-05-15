@@ -1,5 +1,7 @@
-package com.mcintyret.utils;
+package com.mcintyret.utils.concurrent;
 
+
+import java.util.Iterator;
 
 /**
  * User: mcintyret2
@@ -17,4 +19,5 @@ public interface ProcessorFactory<T> {
 
     boolean shouldExecute(T next);
 
+    void onCancellation(Iterator<T> iterator);
 }
