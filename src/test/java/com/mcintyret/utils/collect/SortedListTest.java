@@ -5,6 +5,8 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * User: mcintyret2
  * Date: 14/05/2013
@@ -13,7 +15,7 @@ import java.util.List;
 @Test
 public class SortedListTest {
 
-    public void shouldAddInSortedOrder() {
+    public void shouldAddSorted() {
         List<Integer> list = new SortedList<>();
 
         list.add(4);
@@ -22,7 +24,13 @@ public class SortedListTest {
         list.add(45);
         list.add(2);
 
-        System.out.println(Lists.reverse(list));
+        assertEquals(Lists.newArrayList(2, 4, 6, 8, 45), list);
+    }
 
+    public void shouldAddAllSorted() {
+        List<Integer> list = new SortedList<>();
+        list.addAll(Lists.newArrayList(5, 8, 1, 5, 2, 3, 9));
+
+        assertEquals(Lists.newArrayList(1, 2, 3, 5, 5, 8, 9), list);
     }
 }

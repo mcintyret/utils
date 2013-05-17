@@ -18,6 +18,8 @@ public interface Serializer {
 
     public String serializeToString(Object obj);
 
+    public byte[] serializeToBytes(Object obj);
+
     public <T> T deserializeFromString(String str, Class<T> clazz);
 
     public <T> T deserialize(String fileName, Class<T> clazz);

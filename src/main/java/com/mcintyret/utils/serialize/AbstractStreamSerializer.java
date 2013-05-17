@@ -22,9 +22,18 @@ public abstract class AbstractStreamSerializer extends AbstractSerializer {
 
     @Override
     public String serializeToString(Object obj) {
+        return serializeToByteArrayOutputStream(obj).toString();
+    }
+
+    @Override
+    public byte[] serializeToBytes(Object obj) {
+        return serializeToByteArrayOutputStream(obj).toByteArray();
+    }
+
+    private ByteArrayOutputStream serializeToByteArrayOutputStream(Object obj) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         serialize(obj, new BufferedOutputStream(baos));
-        return baos.toString();
+        return baos;
     }
 
     @Override

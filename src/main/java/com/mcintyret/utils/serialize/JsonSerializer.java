@@ -8,10 +8,9 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.mcintyret.utils.io.RuntimeIoException;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 
@@ -78,13 +77,21 @@ public class JsonSerializer extends AbstractWriterSerializer {
     @Override
     public void serialize(Object obj, Writer writer) {
         ensureGsonBuilt();
-        gson.toJson(obj, writer);
+        try (BufferedWriter bw = new BufferedWriter(writer)) {
+            gson.toJson(obj, bw);
+        } catch (IOException e) {
+            throw new RuntimeIoException(e);
+        }
     }
 
     @Override
     public <T> T deserialize(Reader reader, Class<T> clazz) {
         ensureGsonBuilt();
-        return gson.fromJson(reader, clazz);
+        try (BufferedReader br = new BufferedReader(reader))  {
+            return gson.fromJson(br, clazz);
+        } catch (IOException e) {
+            throw new RuntimeIoException(e);
+        }
     }
 
     @Override

@@ -2,7 +2,10 @@ package com.mcintyret.utils.collect;
 
 import com.google.common.collect.ForwardingList;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.RandomAccess;
 
 /**
  * User: mcintyret2
@@ -47,6 +50,11 @@ public class SortedList<C extends Comparable<C>> extends ForwardingList<C> imple
 
     @Override
     public void add(int i, C c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(int i, Collection<? extends C> collection) {
         throw new UnsupportedOperationException();
     }
 

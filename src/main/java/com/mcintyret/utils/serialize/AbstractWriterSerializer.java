@@ -13,7 +13,7 @@ public abstract class AbstractWriterSerializer extends AbstractSerializer {
     @Override
     public void serialize(Object obj, File file) {
         try {
-            serialize(obj, new BufferedWriter(new FileWriter(file)));
+            serialize(obj, new FileWriter(file));
         } catch (IOException e) {
             throw new RuntimeIoException(e);
         }
@@ -24,6 +24,11 @@ public abstract class AbstractWriterSerializer extends AbstractSerializer {
         StringWriter writer = new StringWriter();
         serialize(obj, writer);
         return writer.toString();
+    }
+
+    @Override
+    public byte[] serializeToBytes(Object obj) {
+        return serializeToString(obj).getBytes();
     }
 
     @Override
@@ -39,7 +44,7 @@ public abstract class AbstractWriterSerializer extends AbstractSerializer {
     @Override
     public <T> T deserialize(File file, Class<T> clazz) {
         try {
-            return deserialize(new BufferedReader(new FileReader(file)), clazz);
+            return deserialize(new FileReader(file), clazz);
         } catch (FileNotFoundException e) {
             throw new RuntimeIoException(e);
         }
