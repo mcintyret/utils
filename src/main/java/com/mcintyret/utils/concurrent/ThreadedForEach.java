@@ -4,10 +4,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.synchronizedSet;
@@ -54,17 +51,18 @@ public class ThreadedForEach<T> {
     }
 
     public final void execute(boolean blocking) {
+        int count = 0;
         if (!run.getAndSet(true)) {
             factory.beforeExecution();
             Iterator<T> iterator = iterable.iterator();
-            final Phaser phaser = new Phaser(1);
+            final Semaphore semaphore = new Semaphore(0);
 
             running = true;
             while (running && iterator.hasNext()) {
                 final T next = iterator.next();
                 if (factory.shouldExecute(next)) {
                     inProgress.add(next);
-                    phaser.register();
+                    count++;
                     futures.put(next, executor.submit(new Runnable() {
                         @Override
                         public void run() {
@@ -72,7 +70,7 @@ public class ThreadedForEach<T> {
                                 factory.newRunnable(next).run();
                             } finally {
                                 inProgress.remove(next);
-                                phaser.arriveAndDeregister();
+                                semaphore.release();
                             }
                         }
                     }));
@@ -80,7 +78,7 @@ public class ThreadedForEach<T> {
             }
             stop();
             if (blocking) {
-                phaser.arriveAndAwaitAdvance();
+                semaphore.acquireUninterruptibly(count);
                 if (iterator.hasNext() || !inProgress.isEmpty()) {
                     factory.onCancellation(Iterators.concat(iterator, inProgress.iterator()));
                 }
@@ -98,5 +96,15 @@ public class ThreadedForEach<T> {
 
     public final boolean isRunning() {
         return running;
+    }
+
+    public boolean shutdown(long timeoutMillis) {
+        executor.shutdown();
+        try {
+            return executor.awaitTermination(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+            return shutdown(timeoutMillis);
+        }
     }
 }

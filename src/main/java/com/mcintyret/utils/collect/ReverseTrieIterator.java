@@ -61,7 +61,7 @@ class ReverseTrieIterator<V> extends AbstractTrieIterator<V> {
                 index--;
                 if (charAndNode.getNode().getValue() != null) {
                     // This is an actual entry of interest
-                    return MapUtils.trieNodeEntry(charAndNode.getNode(), new String(key, 0, index + 1));
+                    return trieNodeEntry(charAndNode.getNode(), new String(key, 0, index + 1));
                 }
             }
         }
@@ -72,7 +72,7 @@ class ReverseTrieIterator<V> extends AbstractTrieIterator<V> {
             iterator = iteratorStack.pop();
             CharacterAndNode<V> popped = valueStack.pop();
             if (popped.getNode().getValue() != null) {
-                return MapUtils.trieNodeEntry(popped.getNode(), new String(key, 0, index + 1));
+                return trieNodeEntry(popped.getNode(), new String(key, 0, index + 1));
             } else {
                 return computeNext();
             }

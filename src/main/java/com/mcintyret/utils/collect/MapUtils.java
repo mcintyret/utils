@@ -61,22 +61,16 @@ public class MapUtils {
         }
     }
 
-    public static <V> Map.Entry<String, V> trieNodeEntry(final TrieNode<V> node, final String key) {
-        return new Map.Entry<String, V>() {
-            @Override
-            public String getKey() {
-                return key;
+    public static boolean deepEquals(Map<?, ?> one, Map<?, ?> two) {
+        if (one.size() != two.size()) {
+            return false;
+        }
+        for (Map.Entry<?, ?> entry : one.entrySet()) {
+            if (!Objects.deepEquals(entry.getValue(), two.get(entry.getKey()))) {
+                return false;
             }
-
-            @Override
-            public V getValue() {
-                return node.getValue();
-            }
-
-            @Override
-            public V setValue(V value) {
-                return node.setValue(value);
-            }
-        };
+        }
+        return true;
     }
+
 }

@@ -3,9 +3,7 @@ package com.mcintyret.utils;
 import com.google.common.collect.Iterables;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Random;
-import java.util.RandomAccess;
 
 /**
  * User: mcintyret2
@@ -23,13 +21,45 @@ public final class RandomUtils {
         return RNG.nextInt(max - min) + min;
     }
 
+    public static <T> T randomElement(T[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static byte randomElement(byte[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static char randomElement(char[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static int randomElement(int[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static short randomElement(short[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static boolean randomElement(boolean[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static long randomElement(long[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static float randomElement(float[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
+    public static double randomElement(double[] array) {
+        return array[RNG.nextInt(array.length)];
+    }
+
     public static <T> T randomElement(Collection<T> coll) {
         int index = RNG.nextInt(coll.size());
-        if (coll instanceof RandomAccess) {
-            return ((List<T>) coll).get(index);
-        } else {
-            return Iterables.get(coll, index);
-        }
+        return Iterables.get(coll, index);
     }
 
 }

@@ -51,7 +51,7 @@ class LexicographicTrieIterator<V> extends AbstractTrieIterator<V> {
             iterator = charAndNode.getNode().iterator();
             if (charAndNode.getNode().getValue() != null) {
                 // This is an actual entry of interest
-                return MapUtils.trieNodeEntry(charAndNode.getNode(), new String(key, 0, index));
+                return trieNodeEntry(charAndNode.getNode(), new String(key, 0, index));
             }
         }
         if (!iteratorStack.isEmpty()) {

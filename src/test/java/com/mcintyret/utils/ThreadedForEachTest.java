@@ -108,7 +108,7 @@ public class ThreadedForEachTest {
                 return new Runnable() {
                     @Override
                     public void run() {
-                        int i = (Integer) invocation.getArguments()[0];
+                        Integer i = (Integer) invocation.getArguments()[0];
                         if (i == 3) {
                             threadedForEach.stop();
                         }

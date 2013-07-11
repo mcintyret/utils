@@ -41,4 +41,23 @@ abstract class AbstractTrieIterator<V> extends AbstractIterator<Map.Entry<String
         trie.remove(removed.getKey());
     }
 
+    static <V> Map.Entry<String, V> trieNodeEntry(final TrieNode<V> node, final String key) {
+        return new Map.Entry<String, V>() {
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public V getValue() {
+                return node.getValue();
+            }
+
+            @Override
+            public V setValue(V value) {
+                return node.setValue(value);
+            }
+        };
+    }
+
 }
