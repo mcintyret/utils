@@ -39,7 +39,11 @@ public class ThreadedForEach<T> {
     }
 
     public ThreadedForEach(ProcessorFactory<T> processorFactory) {
-        this(processorFactory, Executors.newFixedThreadPool(10));
+        this(processorFactory, 10);
+    }
+
+    public ThreadedForEach(ProcessorFactory<T> processorFactory, int threads) {
+        this(processorFactory, Executors.newFixedThreadPool(threads));
     }
 
     private volatile boolean running = false;
