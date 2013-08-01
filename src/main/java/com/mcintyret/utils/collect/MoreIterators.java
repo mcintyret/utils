@@ -158,4 +158,28 @@ public final class MoreIterators {
             }
         };
     }
+
+    public static <T> Iterator<T> concat(final T[]... arrays) {
+        return new AbstractIterator<T>() {
+            int index = 0;
+            int superIndex = 0;
+
+            @Override
+            protected T computeNext() {
+                if (index++ == arrays[superIndex].length) {
+                    if (++superIndex == arrays.length) {
+                        return endOfData();
+                    } else {
+                        index = 0;
+                    }
+                }
+                return arrays[superIndex][index];
+            }
+
+            @Override
+            protected void doRemove(T removed) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
 }

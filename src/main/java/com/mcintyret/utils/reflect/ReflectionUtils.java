@@ -1,9 +1,8 @@
 package com.mcintyret.utils.reflect;
 
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.mcintyret.utils.collect.MoreIterables;
+
+import java.lang.reflect.*;
 import java.util.Arrays;
 
 /**
@@ -36,12 +35,20 @@ public final class ReflectionUtils {
     }
 
     public static Object invokeMethod(Object target, String methodName, Object... args) {
-        Method[] methods = target.getClass().getMethods();
-        for (Method m : methods) {
-            if (m.getName().equals(methodName)) {
-                if (argumentsApplicable(args, m.getParameterTypes())) {
+        try {
+            return getMethod(target.getClass(), methodName, args).invoke(target, args);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionException(e);
+        }
+    }
+
+
+    static Method getMethod(Class<?> targetClass, String methodName, Object... args) {
+        for (Method method : MoreIterables.concat(targetClass.getMethods(), targetClass.getDeclaredMethods())) {
+            if (method.getName().equals(methodName)) {
+                if (argumentsApplicable(args, method.getParameterTypes())) {
                     try {
-                        return accessible(m).invoke(target, args);
+                        return method;
                     } catch (Exception e) {
                         throw new ReflectionException(e);
                     }
@@ -49,7 +56,7 @@ public final class ReflectionUtils {
             }
         }
         throw new ReflectionException(new NoSuchMethodError("No method " + methodName + " with parameter types " +
-            "satisfiable by " + Arrays.toString(args) + " exists on class " + target.getClass()));
+                    "satisfiable by " + Arrays.toString(args) + " exists on class " + targetClass));
     }
 
     public static <T> T newInstance(Class<T> clazz, Object... constructorArgs) {

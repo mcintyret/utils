@@ -51,4 +51,13 @@ public final class MoreIterables {
             };
         }
     }
+
+    public static <T> Iterable<T> concat(final T[]... arrays) {
+        return new Iterable<T>() {
+            @Override
+            public Iterator<T> iterator() {
+                return MoreIterators.concat(arrays);
+            }
+        };
+    }
 }

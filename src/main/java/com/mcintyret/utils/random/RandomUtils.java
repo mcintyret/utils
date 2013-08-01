@@ -1,4 +1,4 @@
-package com.mcintyret.utils;
+package com.mcintyret.utils.random;
 
 import com.google.common.collect.Iterables;
 

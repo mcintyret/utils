@@ -2,7 +2,7 @@ package com.mcintyret.utils.collect;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.mcintyret.utils.RandomUtils;
+import com.mcintyret.utils.random.RandomUtils;
 import com.mcintyret.utils.serialize.JavaSerializer;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.Test;
