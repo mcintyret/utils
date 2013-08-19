@@ -6,7 +6,7 @@ package com.mcintyret.utils.serialize;
  */
 public enum SerializationStrategy {
 
-    JSON(".json"), JAVA(".ser"), HESSIAN(".hessian");
+    JSON(".json"), JAVA(".ser"), HESSIAN(".hessian"), KRYO(".kryo");
 
     private String suffix;
 

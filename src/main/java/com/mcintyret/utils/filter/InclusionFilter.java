@@ -59,4 +59,11 @@ public class InclusionFilter<T> extends AbstractFilter<T> {
             restrict();
         }
     }
+
+    public void set(Collection<T> c) {
+        Set<T> copy = new HashSet<>(set);
+        copy.removeAll(c);
+        removeAll(copy);
+        addAll(c);
+    }
 }

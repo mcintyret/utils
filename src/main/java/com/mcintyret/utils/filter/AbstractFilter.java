@@ -4,17 +4,17 @@ package com.mcintyret.utils.filter;
  * User: mcintyret2
  * Date: 31/07/2013
  */
-public abstract class AbstractFilter<T> implements Filter<T> {
+public abstract class AbstractFilter<T> extends BaseFilter<T> {
 
     private State state = State.EXPANDED;
 
     @Override
-    public State getState() {
+    protected State doGetState() {
         return state;
     }
 
     @Override
-    public final void clearState() {
+    protected void doClearState() {
         setState(State.NO_CHANGE);
     }
 

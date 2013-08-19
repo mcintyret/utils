@@ -4,7 +4,7 @@ package com.mcintyret.utils.filter;
  * User: mcintyret2
  * Date: 31/07/2013
  */
-public class ComparableFilter<C extends Comparable<C>> extends AbstractFilter<C> {
+public class ComparableFilter<C extends Comparable<? super C>> extends AbstractFilter<C> {
 
     private C min;
 
@@ -13,6 +13,8 @@ public class ComparableFilter<C extends Comparable<C>> extends AbstractFilter<C>
     private C max;
 
     private boolean maxInclusive;
+
+
 
     public ComparableFilter(C min, boolean minInclusive, C max, boolean maxInclusive) {
         this.min = min;
@@ -41,10 +43,10 @@ public class ComparableFilter<C extends Comparable<C>> extends AbstractFilter<C>
     public void setMin(C min) {
         int comp = min.compareTo(this.min);
         if (comp > 0) {
-            // the new min is smaller
-            expand();
-        } else if (comp < 0) {
+            // the new min is larger
             restrict();
+        } else if (comp < 0) {
+            expand();
         }
         this.min = min;
     }
@@ -57,10 +59,10 @@ public class ComparableFilter<C extends Comparable<C>> extends AbstractFilter<C>
     public void setMax(C max) {
         int comp = max.compareTo(this.max);
         if (comp > 0) {
-            // the new max is smaller
-            restrict();
-        } else if (comp < 0) {
+            // the new max is larger
             expand();
+        } else if (comp < 0) {
+            restrict();
         }
         this.max = max;
     }

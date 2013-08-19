@@ -4,21 +4,16 @@ package com.mcintyret.utils.filter;
  * User: mcintyret2
  * Date: 31/07/2013
  */
-public class NegatedFilter<T> implements Filter<T> {
+public class NegatedFilter<T> extends BaseFilter<T> {
 
     private final Filter<T> delegate;
-
-    private boolean stateCleared = false;
 
     public NegatedFilter(Filter<T> delegate) {
         this.delegate = delegate;
     }
 
     @Override
-    public State getState() {
-        if (!stateCleared) {
-            return State.EXPANDED;
-        }
+    protected State doGetState() {
         switch (delegate.getState()) {
             case NO_CHANGE:
                 return State.NO_CHANGE;
@@ -34,8 +29,7 @@ public class NegatedFilter<T> implements Filter<T> {
     }
 
     @Override
-    public void clearState() {
-        stateCleared = true;
+    protected void doClearState() {
         delegate.clearState();
     }
 

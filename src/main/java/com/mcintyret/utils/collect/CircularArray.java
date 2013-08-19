@@ -88,7 +88,8 @@ public class CircularArray<E> extends AbstractList<E> {
 
     @Override
     public <T> T[] toArray(T[] dest) {
-        return (T[]) toArray();
+        System.arraycopy(array, 0, dest, 0, size());
+        return dest;
     }
 
     @Override

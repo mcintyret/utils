@@ -1,17 +1,24 @@
 //package com.mcintyret.utils.collect;
 //
+//import com.google.common.collect.Lists;
+//
 //import java.util.*;
 //
 ///**
-// * User: mcintyret2
-// * Date: 10/04/2013
-// */
+//* User: mcintyret2
+//* Date: 10/04/2013
+//*/
 //public class ArrayListNavigableMap<V> extends AbstractNavigableMap<Integer, V> {
 //
-//    private final ArrayList<V> list;
+//    private final List<V> list;
 //
-//    public ArrayListNavigableMap(ArrayList<V> list) {
-//        this.list = list;
+//    public ArrayListNavigableMap(Iterable<? extends V> it) {
+//        this.list = Lists.newArrayList(it);
+//    }
+//
+//    public ArrayListNavigableMap(int size) {
+//        list = new ArrayList<>(size);
+//        Collections.fill(list, null);
 //    }
 //
 //    @Override
@@ -48,16 +55,17 @@
 //
 //                    @Override
 //                    public V setValue(V value) {
-//                        return null;  //To change body of implemented methods use File | Settings | File Templates.
+//                        it.set(value);
+//                        return val;
 //                    }
-//                }
+//                };
 //            }
 //
 //            @Override
 //            public void remove() {
-//                //To change body of implemented methods use File | Settings | File Templates.
+//                it.remove();
 //            }
-//        }
+//        };
 //    }
 //
 //    @Override
