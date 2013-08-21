@@ -15,7 +15,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class FileIterableTest {
 
     public void shouldIterateFile() {
-        Iterable<String> it = new FileIterable("/Users/mcintyret2/Workspace/utils/src/test/resources/test-file");
+        Iterable<String> it = new FileIterable(System.getProperty("user.dir") + "/src/test/resources/test-file");
 
         assertTrue(Iterables.elementsEqual(Lists.newArrayList("foo", "bar", "baz"), it));
     }
