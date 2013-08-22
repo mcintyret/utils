@@ -86,4 +86,21 @@ public abstract class OptionalInt {
             return 0;
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        }
+        if (other == this) {
+            return true;
+        }
+        // if other != this, it must be present
+        return other instanceof OptionalInt && get() == ((OptionalInt) other).get();
+    }
+
+    @Override
+    public int hashCode() {
+        return isPresent() ? 0 : get();
+    }
 }

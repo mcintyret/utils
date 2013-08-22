@@ -86,4 +86,25 @@ public abstract class OptionalLong {
             return 0L;
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        }
+        if (other == this) {
+            return true;
+        }
+        // if other != this, it must be present
+        return other instanceof OptionalLong && get() == ((OptionalLong) other).get();
+    }
+
+    @Override
+    public int hashCode() {
+        return isPresent() ? 0 : hashCode(get());
+    }
+
+    private static int hashCode(long l) {
+        return (int)(l ^ (l >>> 32));
+    }
 }

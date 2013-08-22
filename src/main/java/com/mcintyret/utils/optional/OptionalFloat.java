@@ -98,4 +98,21 @@ public abstract class OptionalFloat {
             return Float.NaN;
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        }
+        if (other == this) {
+            return true;
+        }
+        // if other != this, it must be present
+        return other instanceof OptionalFloat && get() == ((OptionalFloat) other).get();
+    }
+
+    @Override
+    public int hashCode() {
+        return isPresent() ? 0 : Float.floatToIntBits(get());
+    }
 }

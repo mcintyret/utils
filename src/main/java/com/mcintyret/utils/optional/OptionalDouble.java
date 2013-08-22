@@ -98,4 +98,26 @@ public abstract class OptionalDouble {
             return Double.NaN;
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        }
+        if (other == this) {
+            return true;
+        }
+        // if other != this, it must be present
+        return other instanceof OptionalDouble && get() == ((OptionalDouble) other).get();
+    }
+
+    @Override
+    public int hashCode() {
+        return isPresent() ? 0 : hashCode(get());
+    }
+
+    private static int hashCode(double d) {
+        long bits = Double.doubleToLongBits(d);
+        return (int)(bits ^ (bits >>> 32));
+    }
 }
