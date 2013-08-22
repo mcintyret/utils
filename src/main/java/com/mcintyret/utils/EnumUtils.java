@@ -3,6 +3,8 @@ package com.mcintyret.utils;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -54,6 +56,18 @@ public final class EnumUtils {
             }
         }
         return enumMap;
+    }
+
+    public static <E extends Enum<E>> Set<E> setOf(E... elems) {
+        Set<E> set = EnumSet.noneOf((Class<E>) elems.getClass().getComponentType());
+        for (E elem : elems) {
+            set.add(elem);
+        }
+        return set;
+    }
+
+    public static String toName(Enum enumVal) {
+        return WordUtils.capitalize(enumVal.name().replaceAll("_", " ").toLowerCase());
     }
 }
 
