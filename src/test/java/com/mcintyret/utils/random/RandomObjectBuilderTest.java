@@ -22,6 +22,7 @@ public class RandomObjectBuilderTest {
 
     public void shouldGetRandomSimpleObject() {
         SimpleObject so = RandomObjectBuilder.randomObject(SimpleObject.class);
+        System.out.println(so);
     }
 
     public void shouldGetRandomComplexObject() {
@@ -60,6 +61,13 @@ public class RandomObjectBuilderTest {
 
         private List<Integer> list;
 
+        @Override
+        public String toString() {
+            return "SimpleObject{" +
+                "string='" + string + '\'' +
+                ", list=" + list +
+                '}';
+        }
     }
 
     public static class MoreComplexObject {

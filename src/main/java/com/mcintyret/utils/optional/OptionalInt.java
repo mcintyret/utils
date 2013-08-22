@@ -4,7 +4,7 @@ package com.mcintyret.utils.optional;
  * User: mcintyret2
  * Date: 22/08/2013
  */
-public abstract class OptionalInt {
+public abstract class OptionalInt implements Comparable<OptionalInt> {
     
     public static OptionalInt absent() {
         return Absent.INSTANCE;
@@ -23,6 +23,15 @@ public abstract class OptionalInt {
     public abstract int or(int other);
     
     public abstract int orZero();
+
+    @Override
+    public int compareTo(OptionalInt o) {
+        if (isPresent()) {
+            return o.isPresent() ? Integer.compare(get(), o.get()) : -1;
+        } else {
+            return o.isPresent() ? 1 : 0;
+        }
+    }
     
     private static class Present extends OptionalInt {
 

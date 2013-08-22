@@ -4,7 +4,7 @@ package com.mcintyret.utils.optional;
  * User: mcintyret2
  * Date: 22/08/2013
  */
-public abstract class OptionalLong {
+public abstract class OptionalLong implements Comparable<OptionalLong> {
     
     public static OptionalLong absent() {
         return Absent.INSTANCE;
@@ -23,6 +23,15 @@ public abstract class OptionalLong {
     public abstract long or(long other);
     
     public abstract long orZero();
+
+    @Override
+    public int compareTo(OptionalLong o) {
+        if (isPresent()) {
+            return o.isPresent() ? Long.compare(get(), o.get()) : -1;
+        } else {
+            return o.isPresent() ? 1 : 0;
+        }
+    }
     
     private static class Present extends OptionalLong {
 

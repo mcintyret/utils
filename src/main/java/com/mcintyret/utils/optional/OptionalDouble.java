@@ -4,7 +4,7 @@ package com.mcintyret.utils.optional;
  * User: mcintyret2
  * Date: 22/08/2013
  */
-public abstract class OptionalDouble {
+public abstract class OptionalDouble implements Comparable<OptionalDouble> {
     
     public static OptionalDouble absent() {
         return Absent.INSTANCE;
@@ -25,6 +25,15 @@ public abstract class OptionalDouble {
     public abstract double orZero();
     
     public abstract double orNan();
+
+    @Override
+    public int compareTo(OptionalDouble o) {
+        if (isPresent()) {
+            return o.isPresent() ? Double.compare(get(), o.get()) : -1;
+        } else {
+            return o.isPresent() ? 1 : 0;
+        }
+    }
     
     private static class Present extends OptionalDouble {
 

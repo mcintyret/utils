@@ -2,6 +2,7 @@ package com.mcintyret.utils.random;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.joda.time.DateTime;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -16,6 +17,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class RandomObjectBuilder {
 
     private static final Random RNG = new Random();
+
+    private static final long FURTHEST_FUTURE_DATE_MILLIS = DateTime.now().plusYears(1000).getMillis();
 
     private static final Map<Class<?>, RandomObjectProvider<?>> DEFAULT_PROVIDERS = Maps.newHashMap();
     private static final int COLLECTION_SIZE = 20;
@@ -87,6 +90,20 @@ public final class RandomObjectBuilder {
         }
     };
 
+    private static final RandomObjectProvider<Date> DATE_RANDOM = new RandomObjectProvider<Date>() {
+        @Override
+        public Date random() {
+            return new Date((long) (RNG.nextDouble() * FURTHEST_FUTURE_DATE_MILLIS));
+        }
+    };
+
+    private static final RandomObjectProvider<DateTime> DATE_TIME_RANDOM = new RandomObjectProvider<DateTime>() {
+        @Override
+        public DateTime random() {
+            return new DateTime((long) (RNG.nextDouble() * FURTHEST_FUTURE_DATE_MILLIS));
+        }
+    };
+
     static {
         registerDefaultProvider(String.class, STRING_RANDOM);
         registerDefaultProvider(Long.class, LONG_RANDOM);
@@ -105,6 +122,8 @@ public final class RandomObjectBuilder {
         registerDefaultProvider(float.class, FLOAT_RANDOM);
         registerDefaultProvider(Double.class, DOUBLE_RANDOM);
         registerDefaultProvider(double.class, DOUBLE_RANDOM);
+        registerDefaultProvider(Date.class, DATE_RANDOM);
+        registerDefaultProvider(DateTime.class, DATE_TIME_RANDOM);
         registerDefaultProvider(Object.class, STRING_RANDOM);
     }
 

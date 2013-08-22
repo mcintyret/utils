@@ -4,7 +4,7 @@ package com.mcintyret.utils.optional;
  * User: mcintyret2
  * Date: 22/08/2013
  */
-public abstract class OptionalFloat {
+public abstract class OptionalFloat implements Comparable<OptionalFloat> {
 
     public static OptionalFloat absent() {
         return Absent.INSTANCE;
@@ -25,6 +25,15 @@ public abstract class OptionalFloat {
     public abstract float orZero();
 
     public abstract float orNan();
+
+    @Override
+    public int compareTo(OptionalFloat o) {
+        if (isPresent()) {
+            return o.isPresent() ? Float.compare(get(), o.get()) : -1;
+        } else {
+            return o.isPresent() ? 1 : 0;
+        }
+    }
 
     private static class Present extends OptionalFloat {
 
