@@ -40,7 +40,7 @@ public abstract class AbstractEnumMultimap<E extends Enum<E>, V, C extends Colle
 
     @Override
     public boolean containsValue(@Nullable Object value) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return values().contains(value);
     }
 
     @Override
