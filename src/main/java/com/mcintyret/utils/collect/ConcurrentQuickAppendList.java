@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 
 import java.util.AbstractList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -12,32 +13,55 @@ import java.util.concurrent.atomic.AtomicReference;
  * User: mcintyret2
  * Date: 18/08/2013
  */
-public class ConcurrentLinkedList<T> extends AbstractList<T> {
+public class ConcurrentQuickAppendList<T> extends AbstractList<T> {
 
     private final AtomicInteger size = new AtomicInteger();
 
-    private final AtomicReference<Node> head = new AtomicReference<>();
+    private final AtomicReference<Node<T>> head = new AtomicReference<>();
 
-    private final AtomicReference<Node> tail = new AtomicReference<>();
+    private final AtomicReference<Node<T>> tail = new AtomicReference<>();
 
     @Override
     public boolean add(T elem) {
-        Node node = new Node(elem);
-        if (tail.compareAndSet(null, node)) {
-            head.set(node);
+        addNodeToTail(new Node<>(elem), 1);
+        return true;
+    }
+
+    private void addNodeToTail(Node<T> newNode, int sizeChange) {
+        addNodeToTail(newNode, newNode, sizeChange);
+    }
+
+    private void addNodeToTail(Node<T> newNode, Node<T> newTailNode, int sizeChange) {
+        if (tail.compareAndSet(null, newTailNode)) {
+            head.set(newNode);
         } else {
-            Node currentTail = tail.get();
-            while (true) {
-                if (currentTail.next.compareAndSet(null, node)) {
-                    break;
-                } else {
-                    currentTail = currentTail.next.get();
+            Node<T> currentTail;
+            do {
+                currentTail = tail.get();
+            } while (!currentTail.next.compareAndSet(null, newNode));
+
+            tail.set(newTailNode);
+        }
+        size.addAndGet(sizeChange);
+    }
+
+
+
+    @Override
+    public boolean addAll(Collection<? extends T> col) {
+        if (!col.isEmpty()) {
+            if (col instanceof ConcurrentQuickAppendList) {
+                ConcurrentQuickAppendList<T> cqal = (ConcurrentQuickAppendList<T>) col;
+                addNodeToTail(cqal.head.get(), cqal.tail.get(), col.size());
+            } else {
+                for (T t : col) {
+                    add(t);
                 }
             }
-            tail.set(currentTail.next.get());
+            return true;
+        } else {
+            return false;
         }
-        size.incrementAndGet();
-        return true;
     }
 
 
@@ -48,7 +72,7 @@ public class ConcurrentLinkedList<T> extends AbstractList<T> {
 
     @Override
     public T set(int index, T val) {
-        Node node = nodeAt(index);
+        Node<T> node = nodeAt(index);
         T old = node.elem;
         node.elem = val;
         return old;
@@ -71,19 +95,19 @@ public class ConcurrentLinkedList<T> extends AbstractList<T> {
         }
     }
 
-    private Node nodeAt(int index) {
+    private Node<T> nodeAt(int index) {
         Preconditions.checkElementIndex(index, size());
-        Node node = head.get();
+        Node<T> node = head.get();
         while (--index >= 0) {
             node = node.next.get();
         }
         return node;
     }
 
-    private class Node {
+    private static class Node<T> {
         private volatile T elem;
 
-        private final AtomicReference<Node> next = new AtomicReference<>();
+        private final AtomicReference<Node<T>> next = new AtomicReference<>();
 
         private Node(T elem) {
             this.elem = elem;
@@ -94,7 +118,9 @@ public class ConcurrentLinkedList<T> extends AbstractList<T> {
     public Iterator<T> iterator() {
         return new AbstractIterator<T>() {
 
-            Node node = head.get();
+            Node<T> node = head.get();
+            Node<T> prev;
+            Node<T> prev2;
 
             @Override
             protected T computeNext() {
@@ -102,6 +128,8 @@ public class ConcurrentLinkedList<T> extends AbstractList<T> {
                     return endOfData();
                 } else {
                     T next = node.elem;
+                    prev2 = prev;
+                    prev = node;
                     node = node.next.get();
                     return next;
                 }

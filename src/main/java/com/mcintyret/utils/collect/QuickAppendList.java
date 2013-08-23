@@ -87,26 +87,6 @@ public final class QuickAppendList<T> extends AbstractList<T> {
     }
 
     @Override
-    public boolean remove(Object obj) {
-        if (head != null) {
-            if (head.elem.equals(obj)) {
-                head = head.next;
-                size--;
-                return true;
-            } else {
-                while (head.next != null) {
-                    if (head.next.elem.equals(obj)) {
-                        head.next.next = head.next;
-                        size--;
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    @Override
     public Iterator<T> iterator() {
         return new AbstractIterator<T>() {
 
@@ -129,7 +109,12 @@ public final class QuickAppendList<T> extends AbstractList<T> {
 
             @Override
             protected void doRemove(T removed) {
-                prev2.next.next = prev2.next;
+                if (prev2 == null) {
+                    // we are removing head
+                    head = head.next;
+                } else {
+                    prev2.next.next = prev2.next;
+                }
                 size--;
             }
         };
