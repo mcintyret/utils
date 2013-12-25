@@ -122,7 +122,7 @@ public abstract class OptionalDouble implements Comparable<OptionalDouble> {
 
     @Override
     public int hashCode() {
-        return isPresent() ? 0 : hashCode(get());
+        return isPresent() ? hashCode(get()) : 0;
     }
 
     private static int hashCode(double d) {

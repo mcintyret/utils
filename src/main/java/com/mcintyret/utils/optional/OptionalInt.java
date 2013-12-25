@@ -110,6 +110,6 @@ public abstract class OptionalInt implements Comparable<OptionalInt> {
 
     @Override
     public int hashCode() {
-        return isPresent() ? 0 : get();
+        return isPresent() ? get() : 0;
     }
 }

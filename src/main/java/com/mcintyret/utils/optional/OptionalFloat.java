@@ -122,6 +122,6 @@ public abstract class OptionalFloat implements Comparable<OptionalFloat> {
 
     @Override
     public int hashCode() {
-        return isPresent() ? 0 : Float.floatToIntBits(get());
+        return isPresent() ? Float.floatToIntBits(get()) : 0;
     }
 }
