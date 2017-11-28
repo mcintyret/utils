@@ -1,9 +1,8 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
-
+import java.util.Collections;
 import java.util.Map;
+import com.google.common.collect.PeekingIterator;
 
 import static com.google.common.collect.Iterators.singletonIterator;
 
@@ -20,7 +19,7 @@ class LexicographicTrieIterator<V> extends AbstractTrieIterator<V> {
     LexicographicTrieIterator(AbstractTrie<V> trie, TrieNode<V> baseNode, String prefix) {
         super(trie, prefix);
         index = prefix.length();
-        iterator = baseNode == null ? Iterators.<CharacterAndNode<V>>emptyIterator() :
+        iterator = baseNode == null ? Collections.emptyIterator() :
                 singletonIterator(new CharacterAndNode<>('\0', baseNode));
     }
 

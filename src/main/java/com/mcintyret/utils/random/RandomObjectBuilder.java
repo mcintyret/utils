@@ -1,12 +1,37 @@
 package com.mcintyret.utils.random;
 
-import com.google.common.collect.Maps;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.time.ZonedDateTime;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Deque;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.Stack;
+import java.util.TreeMap;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.joda.time.DateTime;
-
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
+import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -18,7 +43,7 @@ public final class RandomObjectBuilder {
 
     private static final Random RNG = new Random();
 
-    private static final long FURTHEST_FUTURE_DATE_MILLIS = DateTime.now().plusYears(1000).getMillis();
+    private static final long FURTHEST_FUTURE_DATE_MILLIS = ZonedDateTime.now().plusYears(1000).toInstant().toEpochMilli();
 
     private static final Map<Class<?>, RandomObjectProvider<?>> DEFAULT_PROVIDERS = Maps.newHashMap();
     private static final int COLLECTION_SIZE = 20;
@@ -97,13 +122,6 @@ public final class RandomObjectBuilder {
         }
     };
 
-    private static final RandomObjectProvider<DateTime> DATE_TIME_RANDOM = new RandomObjectProvider<DateTime>() {
-        @Override
-        public DateTime random() {
-            return new DateTime((long) (RNG.nextDouble() * FURTHEST_FUTURE_DATE_MILLIS));
-        }
-    };
-
     static {
         registerDefaultProvider(String.class, STRING_RANDOM);
         registerDefaultProvider(Long.class, LONG_RANDOM);
@@ -123,7 +141,6 @@ public final class RandomObjectBuilder {
         registerDefaultProvider(Double.class, DOUBLE_RANDOM);
         registerDefaultProvider(double.class, DOUBLE_RANDOM);
         registerDefaultProvider(Date.class, DATE_RANDOM);
-        registerDefaultProvider(DateTime.class, DATE_TIME_RANDOM);
         registerDefaultProvider(Object.class, STRING_RANDOM);
     }
 

@@ -1,13 +1,11 @@
 package com.mcintyret.utils.io;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.mcintyret.utils.collect.MoreIterables.toCollection;
@@ -18,7 +16,7 @@ import static com.mcintyret.utils.collect.MoreIterables.toCollection;
  */
 public final class FileUtils {
 
-    private static final DateTimeFormatter FORMAT = DateTimeFormat.forPattern("hh:mm:ss-dd-MM-yyyy");
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("hh:mm:ss-dd-MM-yyyy");
 
     public static void writeLines(String filename, Iterable<String> lines, WriteStrategy writeStrategy) throws IOException {
         writeLines(new File(filename), lines, writeStrategy);
@@ -67,7 +65,7 @@ public final class FileUtils {
     private static String makeTimestampedFilename(File file) {
         String newFileName;
         String oldFileName = file.getAbsolutePath();
-        String timestamp = '-' + FORMAT.print(DateTime.now());
+        String timestamp = '-' + FORMAT.format(LocalDateTime.now());
         int lastDot = oldFileName.lastIndexOf('.');
         int lastSeparator = oldFileName.lastIndexOf(File.separatorChar);
         if (lastDot > lastSeparator) {

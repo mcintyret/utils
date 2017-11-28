@@ -1,13 +1,18 @@
 package com.mcintyret.utils.collect;
 
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
-
-import javax.annotation.Nullable;
-import java.util.*;
 
 /**
  * User: tommcintyre
@@ -171,7 +176,7 @@ public abstract class AbstractEnumMultimap<E extends Enum<E>, V, C extends Colle
 
                     private Iterator<E> keyIterator = map.keySet().iterator();
                     private E key = keyIterator.hasNext() ? keyIterator.next() : null;
-                    private Iterator<V> valueIterator = key == null ? map.get(key).iterator() : Iterators.<V>emptyIterator();
+                    private Iterator<V> valueIterator = key == null ? map.get(key).iterator() : Collections.emptyIterator();
 
                     @Override
                     protected Map.Entry<E, V> computeNext() {

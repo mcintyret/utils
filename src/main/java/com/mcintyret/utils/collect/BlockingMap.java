@@ -109,33 +109,24 @@ public class BlockingMap<K, V> implements Map<K, V> {
         return new AbstractSet<Entry<K, V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return Iterators.transform(Iterators.filter(delegate.entrySet().iterator(), new Predicate<Entry<K, SettableFuture<V>>>() {
+                return Iterators.transform(Iterators.filter(delegate.entrySet().iterator(),
+                        input -> input.getValue().isDone()), input -> new Entry<K, V>() {
+
                     @Override
-                    public boolean apply(Entry<K, SettableFuture<V>> input) {
-                        return input.getValue().isDone();
+                    public K getKey() {
+                        return input.getKey();
                     }
-                }), new Function<Entry<K, SettableFuture<V>>, Entry<K, V>>() {
+
                     @Override
-                    public Entry<K, V> apply(final Entry<K, SettableFuture<V>> input) {
-                        return new Entry<K, V>() {
+                    public V getValue() {
+                        return getUnchecked(input.getValue());
+                    }
 
-                            @Override
-                            public K getKey() {
-                                return input.getKey();
-                            }
-
-                            @Override
-                            public V getValue() {
-                                return getUnchecked(input.getValue());
-                            }
-
-                            @Override
-                            public V setValue(V value) {
-                                V old = getValue();
-                                input.getValue().set(value);
-                                return old;
-                            }
-                        };
+                    @Override
+                    public V setValue(V value) {
+                        V old = getValue();
+                        input.getValue().set(value);
+                        return old;
                     }
                 });
             }
@@ -165,7 +156,7 @@ public class BlockingMap<K, V> implements Map<K, V> {
     }
 
     private SettableFuture<V> getOrPutFuture(Object key) {
-        return MapUtils.putOnce(delegate, (K) key, (Loader<SettableFuture<V>>) FutureLoader.INSTANCE);
+        return delegate.computeIfAbsent((K) key, k -> (SettableFuture<V>) FutureLoader.INSTANCE.load());
     }
 
 }

@@ -76,6 +76,11 @@ public class NoDuplicateList<T> extends AbstractList<T> implements Set<T> {
     }
 
     @Override
+    public Spliterator<T> spliterator() {
+        return list.spliterator();
+    }
+
+    @Override
     public void clear() {
         list.clear();
         set.clear();

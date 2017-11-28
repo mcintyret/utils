@@ -62,7 +62,7 @@ public class ConcurrentMultiMap<K, V> implements Multimap<K, V> {
     }
 
     private Collection<V> getOrPutCol(K key) {
-        return MapUtils.putOnce(map, key, loader);
+        return map.computeIfAbsent(key, k -> loader.load());
     }
 
     @Override

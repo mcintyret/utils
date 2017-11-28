@@ -31,7 +31,7 @@ public abstract class FluentList<E> extends ForwardingList<E> {
         return ofList(copy);
     }
 
-    public FluentList<E> sort(Comparator<E> comparator) {
+    public FluentList<E> sortWith(Comparator<E> comparator) {
         List<E> copy = Lists.newArrayList(delegate());
         Collections.sort(copy, comparator);
         return ofList(copy);

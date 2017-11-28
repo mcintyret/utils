@@ -1,13 +1,11 @@
 package com.mcintyret.utils.collect;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
-
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
+import com.google.common.collect.PeekingIterator;
 
-import static com.google.common.collect.Iterators.emptyIterator;
 import static com.google.common.collect.Iterators.singletonIterator;
 
 /**
@@ -25,7 +23,7 @@ class ReverseTrieIterator<V> extends AbstractTrieIterator<V> {
     ReverseTrieIterator(AbstractTrie<V> trie, TrieNode<V> baseNode, String prefix) {
         super(trie, prefix);
         index = prefix.length();
-        iterator = baseNode == null ? Iterators.<CharacterAndNode<V>>emptyIterator() :
+        iterator = baseNode == null ? Collections.emptyIterator() :
                 singletonIterator(new CharacterAndNode<>('\0', baseNode));
     }
 
@@ -44,7 +42,7 @@ class ReverseTrieIterator<V> extends AbstractTrieIterator<V> {
                 break;
             }
         }
-        iterator = emptyIterator();
+        iterator = Collections.emptyIterator();
     }
 
     @Override
