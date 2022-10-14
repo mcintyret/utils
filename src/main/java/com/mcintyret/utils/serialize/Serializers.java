@@ -17,7 +17,6 @@ public final class Serializers {
     }
 
     static {
-        registerSerializer(HessianSerializer.getInstance());
         registerSerializer(JavaSerializer.getInstance());
         registerSerializer(new JsonSerializer());
     }
